@@ -160,7 +160,7 @@ pub fun memory_garbage_collect(mem: [Text], referenced_objects: [Bool]): [Text] 
             }
             let tag = memory_get_tag(mem, i)
             // NOTE: don't use continue to increment i!
-            if tag == tag_cons {
+            if tag == tag_cons and referenced_objects[i] {
                 let ptr = memory_get_cons_car(mem, i)
                 if not referenced_objects[ptr] {
                     changed = true

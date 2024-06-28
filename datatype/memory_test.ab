@@ -183,7 +183,7 @@ fun test_memory_garbage_collect() {
     // - obj 8 is referenced by obj 6
     // - obj 9 is not referenced at all
     // - obj 10 is unused
-    let mem = memory_new(10)
+    let mem = memory_new(11)
     mem = memory_put_text(mem, 0, "I'm #0")
     mem = memory_put_cons(mem, 1, 2, 3)
     mem = memory_put_text(mem, 2, "I'm #2")
@@ -205,7 +205,38 @@ fun test_memory_garbage_collect() {
         echo "memory_get_tag(mem, 0) = {tag}"
         fail 1
     }
-
+    tag = memory_get_tag(mem, 1)
+    if tag != tag_cons {
+        echo "memory_get_tag(mem, 1) = {tag}"
+        fail 1
+    }
+    tag = memory_get_tag(mem, 2)
+    if tag != tag_text {
+        echo "memory_get_tag(mem, 2) = {tag}"
+        fail 1
+    }
+    tag = memory_get_tag(mem, 3)
+    if tag != tag_cons {
+        echo "memory_get_tag(mem, 3) = {tag}"
+        fail 1
+    }
+    tag = memory_get_tag(mem, 4)
+    if tag != tag_text {
+        echo "memory_get_tag(mem, 4) = {tag}"
+        fail 1
+    }
+    tag = memory_get_tag(mem, 5)
+    if tag != tag_nil {
+        echo "memory_get_tag(mem, 5) = {tag}"
+        fail 1
+    }
+    loop i in 6..=10 {
+        tag = memory_get_tag(mem, i)
+        if tag != tag_unused {
+            echo "memory_get_tag(mem, {i}) = {tag}"
+            fail 1
+        }
+    }
 }
 
 pub fun test_memory() {
