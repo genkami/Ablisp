@@ -54,6 +54,7 @@ pub fun memory_grow(old_mem: [Text]): [Text] {
     return new_mem
 }
 
+#[allow_absurd_cast]
 pub fun memory_get_tag(mem: [Text], i: Num): Num {
     return mem[3 * i] as Num
 }
@@ -64,6 +65,25 @@ pub fun memory_get_val1(mem: [Text], i: Num): Text {
 
 pub fun memory_get_val2(mem: [Text], i: Num): Text {
     return mem[3 * i + 2]
+}
+
+#[allow_absurd_cast]
+pub fun memory_get_num(mem: [Text], i: Num): Num {
+    return memory_get_val1(mem, i) as Num
+}
+
+pub fun memory_get_text(mem: [Text], i: Num): Text {
+    return memory_get_val1(mem, i)
+}
+
+#[allow_absurd_cast]
+pub fun memory_get_cons_car(mem: [Text], i: Num): Num {
+    return memory_get_val1(mem, i) as Num
+}
+
+#[allow_absurd_cast]
+pub fun memory_get_cons_cdr(mem: [Text], i: Num): Num {
+    return memory_get_val2(mem, i) as Num
 }
 
 // NOTE: arrays are passed by value, so updating mem does not affect callers
