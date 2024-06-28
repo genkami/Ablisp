@@ -1,0 +1,100 @@
+import {len} from "std"
+
+// Memory holds every object in Ablisp.
+// Each of Ablisp objects is represented as a sequence of three elements in this array.
+// Every object starts with an index `3*k` (where k is int). The first element is a type tag
+// and the value of remaining two elements depend on the value of the object's type tag.
+//
+// Object types:
+// - [0, _, _]: unused (and will be garbage collected)
+// - [1, v, _]: number with value `v as Num`
+// - [2, v, _]: text with value `v`
+// - [3, _, _]: `t` (or `#t` in other Lisp dialects)
+// - [4, _, _]: `nil`
+// - [5, a, b]: a cons-cell whose car is `a` and cdr is `b`,
+//              where `a` and `b` are object indexes.
+//              An object with index `k` is stored in memory[3*k], memory[3*k+1], and memory[3*k+2].
+
+let tag_unused = 0
+let tag_num = 1
+let tag_text = 2
+let tag_t = 3
+let tag_nil = 4
+let tag_cons = 5
+
+pub fun memory_new(size: Num): [Text] {
+    let mem = [Text]
+    // NOTE: don't use `loop i in 0..X` since it produces `seq 0 -1` when `X == 0`
+    let i = 0
+    loop i in 0..size {
+        if size <= i {
+            break
+        }
+        mem += [tag_unused as Text]
+        i += 1
+    }
+    return mem
+}
+
+pub fun memory_grow(old_mem: [Text]): [Text] {
+    let new_len = len(old_mem) * 2
+    if new_len <= 0 {
+        new_len = 5 // random default value
+    }
+    let new_mem = memory_new(new_len)
+    // NOTE: don't use `loop i in 0..X` since it produces `seq 0 -1` when `X == 0`
+    let i = 0
+    loop {
+        if len(old_mem) <= i {
+            break
+        }
+        new_mem[i] = old_mem[i]
+        i += 1
+    }
+    return new_mem
+}
+
+pub fun memory_get_tag(mem: [Text], i: Num): Num {
+    return mem[3 * i] as Num
+}
+
+pub fun memory_get_val1(mem: [Text], i: Num): Text {
+    return mem[3 * i + 1]
+}
+
+pub fun memory_get_val2(mem: [Text], i: Num): Text {
+    return mem[3 * i + 2]
+}
+
+// NOTE: arrays are passed by value, so updating mem does not affect callers
+pub fun memory_put_object(mem: [Text], i: Num, tag: Num, val1: Text, val2: Text): [Text] {
+    mem[3 * i] = tag as Text
+    mem[3 * i + 1] = val1
+    mem[3 * i + 2] = val2
+    return mem
+}
+
+pub fun memory_put_num(mem: [Text], i: Num, val: Num): [Text] {
+    let new_mem = memory_put_object(mem, i, tag_num, val as Text, "")
+    return new_mem
+}
+
+pub fun memory_put_text(mem: [Text], i: Num, val: Text): [Text] {
+    let new_mem = memory_put_object(mem, i, tag_text, val, "")
+    return new_mem
+}
+
+pub fun memory_put_t(mem: [Text], i: Num): [Text] {
+    let new_mem = memory_put_object(mem, i, tag_t, "", "")
+    return new_mem
+}
+
+pub fun memory_put_nil(mem: [Text], i: Num): [Text] {
+    let new_mem = memory_put_object(mem, i, tag_nil, "", "")
+    return new_mem
+}
+
+pub fun memory_put_cons(mem: [Text], i: Num, car: Num, cdr: Num): [Text] {
+    let new_mem = memory_put_object(mem, i, tag_cons, car as Text, cdr as Text)
+    return new_mem
+}
