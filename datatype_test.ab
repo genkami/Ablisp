@@ -55,7 +55,14 @@ fun test_constructors() {
         fail 1
     }
 
-    let nested = new_cons(new_text("a"), new_cons(new_text("b"), new_cons(new_text("c"), new_nil())))
+    // To avoid Amber#251
+    let elem_a = new_text("a")
+    let elem_b = new_text("b")
+    let elem_c = new_text("c")
+    let nested = new_nil()
+    nested = new_cons(elem_c, nested)
+    nested = new_cons(elem_b, nested)
+    nested = new_cons(elem_a, nested)
     if not is_cons(nested) {
         echo "is_cons(nested) should be true"
         fail 1
@@ -79,6 +86,22 @@ fun test_constructors() {
     }
     if text_value(car(cdr(nested))) != "b" {
         echo "text_value(car(cdr(nested))) should be 'b'"
+        fail 1
+    }
+    if not is_cons(cdr(cdr(nested))) {
+        echo "is_cons(cdr(cdr(nested))) should be true"
+        fail 1
+    }
+    if not is_text(car(cdr(cdr(nested)))) {
+        echo "is_text(car(cdr(cdr(nested)))) should be true"
+        fail 1
+    }
+    if text_value(car(cdr(cdr(nested)))) != "c" {
+        echo "text_value(car(cdr(cdr(nested)))) should be 'c'"
+        fail 1
+    }
+    if not is_nil(cdr(cdr(cdr(nested)))) {
+        echo "cdr(cdr(cdr(nested))) should be nil"
         fail 1
     }
 }
