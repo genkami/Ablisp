@@ -1,0 +1,116 @@
+import * from "./object.ab"
+
+// Since we don't have `pub let`, we have to redefine constants.
+let tag_unused = 0
+let tag_num = 1
+let tag_text = 2
+let tag_t = 3
+let tag_nil = 4
+let tag_cons = 5
+
+fun test_object_new() {
+    debug_clear()
+
+    let ptr0 = new_num(123)
+    if ptr0 != 0 {
+        echo "new_num(...) = {ptr0}"
+        fail 1
+    }
+    let tag = tag_of(ptr0)
+    if tag != tag_num {
+        echo "tag_of(ptr0) = {tag}"
+        fail 1
+    }
+    let num_val = num_value(ptr0)
+    if num_val != 123 {
+        echo "num_value(ptr0) = {num_val}"
+        fail 1
+    }
+
+    let ptr1 = new_text("hoge")
+    if ptr1 != 1 {
+        echo "new_text(...) = {ptr1}"
+        fail 1
+    }
+    tag = tag_of(ptr1)
+    if tag != tag_text {
+        echo "tag_of(ptr1) = {tag}"
+        fail 1
+    }
+    let text_val = text_value(ptr1)
+    if text_val != "hoge" {
+        echo "text_value(ptr1) = {text_val}"
+        fail 1
+    }
+
+    let ptr2 = new_t()
+    if ptr2 != 2 {
+        echo "new_t() = {ptr2}"
+        fail 1
+    }
+    tag = tag_of(ptr2)
+    if tag != tag_t {
+        echo "tag_of(ptr2) = {tag}"
+        fail 1
+    }
+
+    let ptr3 = new_nil()
+    if ptr3 != 3 {
+        echo "new_nil() = {ptr3}"
+        fail 1
+    }
+    tag = tag_of(ptr3)
+    if tag != tag_nil {
+        echo "tag_of(ptr3) = {tag}"
+        fail 1
+    }
+
+    let ptr4 = new_cons(0, 1)
+    if ptr4 != 4 {
+        echo "new_cons(..) = {ptr4}"
+        fail 1
+    }
+    tag = tag_of(ptr4)
+    if tag != tag_cons {
+        echo "tag_of(ptr4) = {tag}"
+        fail 1
+    }
+    let car = cons_car(ptr4)
+    if car != 0 {
+        echo "cons_car(ptr4) = {car}"
+        fail 1
+    }
+    let cdr = cons_cdr(ptr4)
+    if cdr != 1 {
+        echo "cons_cdr(ptr4) = {cdr}"
+        fail 1
+    }
+
+    // 3 is nil
+    // 4 is a cons-cell which references 0 and 1
+    // So 2 is the only object which will be garbage collected
+    let refptrs = [4, 3]
+    garbage_collect(refptrs)
+
+    let ptr5 = new_num(999)
+    if ptr5 != 2 {
+        echo "2 should be reused, got {ptr5}"
+        fail 1
+    }
+    let ptr6 = new_num(888)
+    if ptr6 != 5 {
+        echo "objects garbage collected unexpectedly: {ptr6}"
+        fail 1
+    }
+}
+
+pub fun test_object() {
+    test_object_new() failed {
+        echo "test_object_new failed"
+        fail 1
+    }
+}
+
+main {
+    test_object()?
+}

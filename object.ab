@@ -1,0 +1,147 @@
+// Module object manages Ablisp virtual memory and every Ablisp object.
+import {len} from "std"
+import * from "./object/memory.ab"
+
+// Since we don't have `pub let`, we have to redefine constants.
+let tag_unused = 0
+let tag_num = 1
+let tag_text = 2
+let tag_t = 3
+let tag_nil = 4
+let tag_cons = 5
+
+let the_memory = [Text]
+
+pub fun debug_clear(): Null {
+    the_memory = memory_new(0)
+}
+
+pub fun debug_dump_current_memory(): [Text] {
+    return the_memory
+}
+
+fun find_next_place(): Num {
+    let max_objs = memory_get_max_objects(the_memory)
+    let i = 0
+    loop {
+        if max_objs <= i {
+            break
+        }
+        let tag = memory_get_tag(the_memory, i)
+        if tag == tag_unused {
+            return i
+        }
+        i += 1
+    }
+    the_memory = memory_grow(the_memory)
+    return max_objs
+}
+
+pub fun new_num(val: Num): Num {
+    let i = find_next_place()
+    the_memory = memory_put_num(the_memory, i, val)
+    return i
+}
+
+pub fun new_text(val: Text): Num {
+    let i = find_next_place()
+    the_memory = memory_put_text(the_memory, i, val)
+    return i
+}
+
+pub fun new_t(): Num {
+    let i = find_next_place()
+    the_memory = memory_put_t(the_memory, i)
+    return i
+}
+
+pub fun new_nil(): Num {
+    let i = find_next_place()
+    the_memory = memory_put_nil(the_memory, i)
+    return i
+}
+
+pub fun new_cons(car: Num, cdr: Num): Num {
+    let i = find_next_place()
+    the_memory = memory_put_cons(the_memory, i, car, cdr)
+    return i
+}
+
+pub fun tag_of(ptr: Num): Num {
+    return memory_get_tag(the_memory, ptr)
+}
+
+pub fun num_value(ptr: Num): Num {
+    return memory_get_num(the_memory, ptr)
+}
+
+pub fun text_value(ptr: Num): Text {
+    return memory_get_text(the_memory, ptr)
+}
+
+pub fun cons_car(ptr: Num): Num {
+    return memory_get_cons_car(the_memory, ptr)
+}
+
+pub fun cons_cdr(ptr: Num): Num {
+    return memory_get_cons_cdr(the_memory, ptr)
+}
+
+pub fun garbage_collect(addrs: [Num]): Null {
+    let referenced_objects = init_referenced_objects(memory_get_max_objects(the_memory))
+    let i = 0
+    loop {
+        if len(addrs) <= i {
+            break
+        }
+        let ptr = addrs[i]
+        referenced_objects[ptr] = true
+        i += 1
+    }
+    the_memory = memory_garbage_collect(the_memory, referenced_objects)
+}
+
+pub fun object_eq(ptr1: Num, ptr2: Num): Bool {
+    let tag1 = tag_of(ptr1)
+    let tag2 = tag_of(ptr2)
+    if tag1 == tag_num {
+        return tag2 == tag_num and num_value(ptr1) == num_value(ptr2)
+    } else if tag1 == tag_text {
+        return tag2 == tag_text and text_value(ptr1) == text_value(ptr2)
+    } else if tag1 == tag_t {
+        return tag2 == tag_t
+    } else if tag1 == tag_nil {
+        return tag2 == tag_nil
+    } else if tag1 == tag_cons {
+        return tag1 == tag2
+    }
+}
+
+pub fun object_equal(ptr1: Num, ptr2: Num): Bool {
+    let tag1 = tag_of(ptr1)
+    let tag2 = tag_of(ptr2)
+    if tag1 == tag_num {
+        return tag2 == tag_num and num_value(ptr1) == num_value(ptr2)
+    } else if tag1 == tag_text {
+        return tag2 == tag_text and text_value(ptr1) == text_value(ptr2)
+    } else if tag1 == tag_t {
+        return tag2 == tag_t
+    } else if tag1 == tag_nil {
+        return tag2 == tag_nil
+    } else if tag1 == tag_cons {
+        if tag2 != tag_cons {
+            return false
+        }
+        let car1 = cons_car(ptr1)
+        let car2 = cons_car(ptr2)
+        if not object_equal(car1, car2) {
+            return false
+        }
+        let cdr1 = cons_cdr(ptr1)
+        let cdr2 = cons_cdr(ptr2)
+        if not object_equal(cdr1, cdr2) {
+            return false
+        }
+        return true
+    }
+}
