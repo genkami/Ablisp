@@ -1,35 +1,5 @@
-import * from "./treemap.ab"
-
-fun test_text_lt() {
-    if not text_lt("aaa", "bbb") {
-        echo "aaa < bbb"
-        fail 1
-    }
-    if text_lt("bbc", "bbb") {
-        echo "bbc >= bbb"
-        fail 1
-    }
-    if text_lt("bbb", "bbb") {
-        echo "bbb >= bbb"
-        fail 1
-    }
-}
-
-fun test_tree_constructors() {
-    let leaf = new_leaf("foo", 123)
-    if not tree_is_leaf(leaf) {
-        echo "leaf should be leaf"
-        fail 1
-    }
-
-    let branch = new_branch("bb", new_leaf("aa", 456), new_leaf("cc", 789))
-    if tree_is_leaf(branch) {
-        echo "branch should not be leaf"
-        fail 1
-    }
-}
+import {test_datatype} from "./datatype_test.ab"
 
 main {
-    test_text_lt()?
-    test_tree_constructors()?
+    test_datatype()?
 }

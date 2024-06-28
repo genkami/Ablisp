@@ -1,0 +1,78 @@
+import {len} from "std"
+
+// Data types:
+// - num: ["num", value as Text]
+// - text: ["text", value]
+// - t: ["t"]
+// - nil: ["nil"]
+// - cons: ["cons", len(first-value)] + first-value + second-value
+
+pub fun new_num(value) {
+    return ["num", value as Text]
+}
+
+pub fun is_num(value) {
+    return value[0] == "num"
+}
+
+#[allow_absurd_cast]
+pub fun num_value(value) {
+    return value[1] as Num
+}
+
+pub fun new_text(value) {
+    return ["text", value]
+}
+
+pub fun text_value(value) {
+    return value[1] as Text
+}
+
+pub fun is_text(value) {
+    return value[0] == "text"
+}
+
+pub fun new_t() {
+    return ["t"]
+}
+
+pub fun is_t(value) {
+    return value[0] == "t"
+}
+
+pub fun new_nil() {
+    return ["nil"]
+}
+
+pub fun is_nil(value) {
+    return value[0] == "nil"
+}
+
+pub fun new_cons(first, second) {
+    return ["cons", len(first) as Text] + first + second
+}
+
+pub fun is_cons(value) {
+    return value[0] == "cons"
+}
+
+#[allow_absurd_cast]
+pub fun car(value) {
+    let elem = [Text]
+    let cdr_at = value[1] as Num + 2
+    loop i in 2..cdr_at {
+        elem += [value[i] as Text]
+    }
+    return elem
+}
+
+#[allow_absurd_cast]
+pub fun cdr(value) {
+    let elem = [Text]
+    let cdr_at = value[1] as Num + 2
+    let length = len(value)
+    loop i in cdr_at..length {
+        elem += [value[i] as Text]
+    }
+    return elem
+}
