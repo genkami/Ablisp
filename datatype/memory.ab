@@ -7,8 +7,7 @@ import {len} from "std"
 //
 // Object types:
 // - [0, _, _]: unused (and will be garbage collected)
-// - [1, v, _]: number with value `v as Num`
-// - [2, v, _]: text with value `v`
+// - [1, v, _]: number with value `v as Num` // - [2, v, _]: text with value `v`
 // - [3, _, _]: `t` (or `#t` in other Lisp dialects)
 // - [4, _, _]: `nil`
 // - [5, a, b]: a cons-cell whose car is `a` and cdr is `b`,
@@ -22,10 +21,11 @@ let tag_t = 3
 let tag_nil = 4
 let tag_cons = 5
 
-pub fun memory_new(size: Num): [Text] {
+pub fun memory_new(nobjs: Num): [Text] {
     let mem = [Text]
     // NOTE: don't use `loop i in 0..X` since it produces `seq 0 -1` when `X == 0`
     let i = 0
+    let size = 3 * nobjs
     loop i in 0..size {
         if size <= i {
             break
@@ -36,12 +36,18 @@ pub fun memory_new(size: Num): [Text] {
     return mem
 }
 
+pub fun memory_get_max_objects(mem: [Text]): Num {
+    let length = len(mem)
+    let m = length % 3
+    return (length - m) / 3
+}
+
 pub fun memory_grow(old_mem: [Text]): [Text] {
-    let new_len = len(old_mem) * 2
-    if new_len <= 0 {
-        new_len = 5 // random default value
+    let new_nobjs = memory_get_max_objects(old_mem) * 2
+    if new_nobjs <= 0 {
+        new_nobjs = 2 // random default value
     }
-    let new_mem = memory_new(new_len)
+    let new_mem = memory_new(new_nobjs)
     // NOTE: don't use `loop i in 0..X` since it produces `seq 0 -1` when `X == 0`
     let i = 0
     loop {
@@ -117,4 +123,71 @@ pub fun memory_put_nil(mem: [Text], i: Num): [Text] {
 pub fun memory_put_cons(mem: [Text], i: Num, car: Num, cdr: Num): [Text] {
     let new_mem = memory_put_object(mem, i, tag_cons, car as Text, cdr as Text)
     return new_mem
+}
+
+pub fun memory_clear(mem: [Text], i: Num): [Text] {
+    let new_mem = memory_put_object(mem, i, tag_unused, "<X>", "<X>") // random values to make it easy to debug
+    return new_mem
+}
+
+pub fun init_referenced_objects(n: Num): [Bool] {
+    let objs = [Bool]
+    let i = 0
+    loop {
+        if n <= i {
+            break
+        }
+        objs += [false]
+        i += 1
+    }
+    return objs
+}
+
+// Clears every object except for the following:
+// - (a) objects which is referenced by referenced_objects
+// - (b) objects which is referenced by (a)
+// - (c) objects which is referenced by (b)
+// - ...
+// Here, referenced_objects[i] = true means that the i-th object in mem is referenced.
+pub fun memory_garbage_collect(mem: [Text], referenced_objects: [Bool]): [Text] {
+    let max_objs = memory_get_max_objects(mem)
+    loop {
+        let changed = false
+        let i = 0
+        loop {
+            if max_objs <= i {
+                break
+            }
+            let tag = memory_get_tag(mem, i)
+            // NOTE: don't use continue to increment i!
+            if tag == tag_cons {
+                let ptr = memory_get_cons_car(mem, i)
+                if not referenced_objects[ptr] {
+                    changed = true
+                    referenced_objects[ptr] = true
+                }
+                ptr = memory_get_cons_cdr(mem, i)
+                if not referenced_objects[ptr] {
+                    changed = true
+                    referenced_objects[ptr] = true
+                }
+            }
+            i += 1
+        }
+        if not changed {
+            break
+        }
+    }
+
+    let i = 0
+    loop {
+        if max_objs <= i {
+            break
+        }
+        if not referenced_objects[i] {
+            mem = memory_clear(mem, i)
+        }
+        i += 1
+    }
+    return mem
 }

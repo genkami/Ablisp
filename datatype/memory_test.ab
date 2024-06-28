@@ -35,13 +35,13 @@ fun test_memory_new() {
         fail 1
     }
 
-    let mem2 = memory_new(5)
-    if not memory_equal(mem2, ["0", "0", "0", "0", "0"]) {
+    let mem2 = memory_new(2)
+    if not memory_equal(mem2, ["0", "0", "0", "0", "0", "0"]) {
         echo "memory_new(5) = {mem2}"
         fail 1
     }
 
-    let mem3 = memory_new(30)
+    let mem3 = memory_new(10)
     loop i in 0..10 {
         if memory_get_tag(mem3, i) != tag_unused {
             echo "memory_get_tag(mem3, {i}) = {memory_get_tag(mem3, i)}"
@@ -54,14 +54,14 @@ fun test_memory_new() {
 fun test_memory_grow() {
     let mem1 = [Text]
     mem1 = memory_grow(mem1)
-    if not memory_equal(mem1, ["0", "0", "0", "0", "0"]) {
+    if not memory_equal(mem1, ["0", "0", "0", "0", "0", "0"]) {
         echo "memory_grow(mem1) = {mem1}"
         fail 1
     }
     
     let mem2 = ["a", "b"]
     mem2 = memory_grow(mem2)
-    if not memory_equal(mem2, ["a", "b", "0", "0", "0"]) {
+    if not memory_equal(mem2, ["a", "b", "0", "0", "0", "0"]) {
         echo "memory_grow(mem2) = {mem2}"
         fail 1
     }
@@ -162,6 +162,50 @@ fun test_memory_get_set() {
         echo "memory_get_cons_cdr(mem, 4) = {cons_val_cdr}"
         fail 1
     }
+
+    mem = memory_clear(mem, 4)
+    tag = memory_get_tag(mem, 4)
+    if tag != tag_unused {
+        echo "memory_get_tag(mem, 4) = {tag}"
+        fail 1
+    }
+}
+
+fun test_memory_garbage_collect() {
+    // - obj 0 is referenced
+    // - obj 1 is referenced and references 2 and 3
+    // - obj 2 is referenced by obj 1
+    // - obj 3 is referenced by obj 1 and references 4 and 5
+    // - obj 4 is referenced by obj 3
+    // - obj 5 is referenced by obj 3
+    // - obj 6 is not referenced but references 7 and 8
+    // - obj 7 is referenced by obj 6
+    // - obj 8 is referenced by obj 6
+    // - obj 9 is not referenced at all
+    // - obj 10 is unused
+    let mem = memory_new(10)
+    mem = memory_put_text(mem, 0, "I'm #0")
+    mem = memory_put_cons(mem, 1, 2, 3)
+    mem = memory_put_text(mem, 2, "I'm #2")
+    mem = memory_put_cons(mem, 3, 4, 5)
+    mem = memory_put_text(mem, 4, "I'm #4")
+    mem = memory_put_nil(mem, 5)
+    mem = memory_put_cons(mem, 6, 7, 8)
+    mem = memory_put_text(mem, 7, "I'm #7")
+    mem = memory_put_text(mem, 8, "I'm #8")
+    mem = memory_put_text(mem, 9, "I'm #9")
+
+    let refobj = init_referenced_objects(11)
+    refobj[0] = true
+    refobj[1] = true
+    mem = memory_garbage_collect(mem, refobj)
+
+    let tag = memory_get_tag(mem, 0)
+    if tag != tag_text {
+        echo "memory_get_tag(mem, 0) = {tag}"
+        fail 1
+    }
+
 }
 
 pub fun test_memory() {
@@ -175,6 +219,10 @@ pub fun test_memory() {
     }
     test_memory_get_set() failed {
         echo "test_memory_get_set failed"
+        fail 1
+    }
+    test_memory_garbage_collect() failed {
+        echo "test_memory_garbage_collect failed"
         fail 1
     }
 }
