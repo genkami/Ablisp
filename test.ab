@@ -1,7 +1,9 @@
 import {test_memory} from "./object/memory_test.ab"
 import {test_object} from "./object_test.ab"
+import {test_env} from "./env_test.ab"
 
 main {
     test_memory()?
     test_object()?
+    test_env()?
 }

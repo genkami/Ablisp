@@ -1,0 +1,11 @@
+import * from "./env.ab"
+
+pub fun test_env() {
+    if false {
+        fail 1
+    }
+}
+
+main {
+    test_env()?
+}
