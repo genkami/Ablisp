@@ -2,14 +2,6 @@
 import {len} from "std"
 import * from "./memory.ab"
 
-// Since we don't have `pub let`, we have to redefine constants.
-let tag_unused = 0
-let tag_num = 1
-let tag_text = 2
-let tag_t = 3
-let tag_nil = 4
-let tag_cons = 5
-
 let the_memory = [Text]
 
 pub fun debug_clear(): Null {
@@ -28,7 +20,7 @@ fun find_next_place(): Num {
             break
         }
         let tag = memory_get_tag(the_memory, i)
-        if tag == tag_unused {
+        if tag == tag_unused() {
             return i
         }
         i += 1
@@ -104,15 +96,15 @@ pub fun garbage_collect(addrs: [Num]): Null {
 pub fun object_eq(ptr1: Num, ptr2: Num): Bool {
     let tag1 = tag_of(ptr1)
     let tag2 = tag_of(ptr2)
-    if tag1 == tag_num {
-        return tag2 == tag_num and num_value(ptr1) == num_value(ptr2)
-    } else if tag1 == tag_text {
-        return tag2 == tag_text and text_value(ptr1) == text_value(ptr2)
-    } else if tag1 == tag_t {
-        return tag2 == tag_t
-    } else if tag1 == tag_nil {
-        return tag2 == tag_nil
-    } else if tag1 == tag_cons {
+    if tag1 == tag_num() {
+        return tag2 == tag_num() and num_value(ptr1) == num_value(ptr2)
+    } else if tag1 == tag_text() {
+        return tag2 == tag_text() and text_value(ptr1) == text_value(ptr2)
+    } else if tag1 == tag_t() {
+        return tag2 == tag_t()
+    } else if tag1 == tag_nil() {
+        return tag2 == tag_nil()
+    } else if tag1 == tag_cons() {
         return tag1 == tag2
     }
 }
@@ -120,16 +112,16 @@ pub fun object_eq(ptr1: Num, ptr2: Num): Bool {
 pub fun object_equal(ptr1: Num, ptr2: Num): Bool {
     let tag1 = tag_of(ptr1)
     let tag2 = tag_of(ptr2)
-    if tag1 == tag_num {
-        return tag2 == tag_num and num_value(ptr1) == num_value(ptr2)
-    } else if tag1 == tag_text {
-        return tag2 == tag_text and text_value(ptr1) == text_value(ptr2)
-    } else if tag1 == tag_t {
-        return tag2 == tag_t
-    } else if tag1 == tag_nil {
-        return tag2 == tag_nil
-    } else if tag1 == tag_cons {
-        if tag2 != tag_cons {
+    if tag1 == tag_num() {
+        return tag2 == tag_num() and num_value(ptr1) == num_value(ptr2)
+    } else if tag1 == tag_text() {
+        return tag2 == tag_text() and text_value(ptr1) == text_value(ptr2)
+    } else if tag1 == tag_t() {
+        return tag2 == tag_t()
+    } else if tag1 == tag_nil() {
+        return tag2 == tag_nil()
+    } else if tag1 == tag_cons() {
+        if tag2 != tag_cons() {
             return false
         }
         let car1 = cons_car(ptr1)

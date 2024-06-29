@@ -14,12 +14,15 @@ import {len} from "std"
 //              where `a` and `b` are object indexes.
 //              An object with index `k` is stored in memory[3*k], memory[3*k+1], and memory[3*k+2].
 
-let tag_unused = 0
-let tag_num = 1
-let tag_text = 2
-let tag_t = 3
-let tag_nil = 4
-let tag_cons = 5
+
+// Since we don't have `pub const` or `pub let`,
+// we have to define constants as functions.
+pub fun tag_unused(): Num { return 0 }
+pub fun tag_num(): Num    { return 1 }
+pub fun tag_text(): Num   { return 2 }
+pub fun tag_t(): Num      { return 3 }
+pub fun tag_nil(): Num    { return 4 }
+pub fun tag_cons(): Num   { return 5 }
 
 pub fun memory_new(nobjs: Num): [Text] {
     let mem = [Text]
@@ -30,7 +33,7 @@ pub fun memory_new(nobjs: Num): [Text] {
         if size <= i {
             break
         }
-        mem += [tag_unused as Text]
+        mem += [tag_unused() as Text]
         i += 1
     }
     return mem
@@ -101,32 +104,32 @@ pub fun memory_put_object(mem: [Text], i: Num, tag: Num, val1: Text, val2: Text)
 }
 
 pub fun memory_put_num(mem: [Text], i: Num, val: Num): [Text] {
-    let new_mem = memory_put_object(mem, i, tag_num, val as Text, "")
+    let new_mem = memory_put_object(mem, i, tag_num(), val as Text, "")
     return new_mem
 }
 
 pub fun memory_put_text(mem: [Text], i: Num, val: Text): [Text] {
-    let new_mem = memory_put_object(mem, i, tag_text, val, "")
+    let new_mem = memory_put_object(mem, i, tag_text(), val, "")
     return new_mem
 }
 
 pub fun memory_put_t(mem: [Text], i: Num): [Text] {
-    let new_mem = memory_put_object(mem, i, tag_t, "", "")
+    let new_mem = memory_put_object(mem, i, tag_t(), "", "")
     return new_mem
 }
 
 pub fun memory_put_nil(mem: [Text], i: Num): [Text] {
-    let new_mem = memory_put_object(mem, i, tag_nil, "", "")
+    let new_mem = memory_put_object(mem, i, tag_nil(), "", "")
     return new_mem
 }
 
 pub fun memory_put_cons(mem: [Text], i: Num, car: Num, cdr: Num): [Text] {
-    let new_mem = memory_put_object(mem, i, tag_cons, car as Text, cdr as Text)
+    let new_mem = memory_put_object(mem, i, tag_cons(), car as Text, cdr as Text)
     return new_mem
 }
 
 pub fun memory_clear(mem: [Text], i: Num): [Text] {
-    let new_mem = memory_put_object(mem, i, tag_unused, "<X>", "<X>") // random values to make it easy to debug
+    let new_mem = memory_put_object(mem, i, tag_unused(), "<X>", "<X>") // random values to make it easy to debug
     return new_mem
 }
 
@@ -160,7 +163,7 @@ pub fun memory_garbage_collect(mem: [Text], referenced_objects: [Bool]): [Text] 
             }
             let tag = memory_get_tag(mem, i)
             // NOTE: don't use continue to increment i!
-            if tag == tag_cons and referenced_objects[i] {
+            if tag == tag_cons() and referenced_objects[i] {
                 let ptr = memory_get_cons_car(mem, i)
                 if not referenced_objects[ptr] {
                     changed = true

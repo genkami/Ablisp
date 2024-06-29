@@ -1,12 +1,5 @@
+import * from "./memory.ab"
 import * from "./object.ab"
-
-// Since we don't have `pub let`, we have to redefine constants.
-let tag_unused = 0
-let tag_num = 1
-let tag_text = 2
-let tag_t = 3
-let tag_nil = 4
-let tag_cons = 5
 
 fun test_object_new() {
     debug_clear()
@@ -17,7 +10,7 @@ fun test_object_new() {
         fail 1
     }
     let tag = tag_of(ptr0)
-    if tag != tag_num {
+    if tag != tag_num() {
         echo "tag_of(ptr0) = {tag}"
         fail 1
     }
@@ -33,7 +26,7 @@ fun test_object_new() {
         fail 1
     }
     tag = tag_of(ptr1)
-    if tag != tag_text {
+    if tag != tag_text() {
         echo "tag_of(ptr1) = {tag}"
         fail 1
     }
@@ -49,7 +42,7 @@ fun test_object_new() {
         fail 1
     }
     tag = tag_of(ptr2)
-    if tag != tag_t {
+    if tag != tag_t() {
         echo "tag_of(ptr2) = {tag}"
         fail 1
     }
@@ -60,7 +53,7 @@ fun test_object_new() {
         fail 1
     }
     tag = tag_of(ptr3)
-    if tag != tag_nil {
+    if tag != tag_nil() {
         echo "tag_of(ptr3) = {tag}"
         fail 1
     }
@@ -71,7 +64,7 @@ fun test_object_new() {
         fail 1
     }
     tag = tag_of(ptr4)
-    if tag != tag_cons {
+    if tag != tag_cons() {
         echo "tag_of(ptr4) = {tag}"
         fail 1
     }

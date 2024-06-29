@@ -1,15 +1,6 @@
 import {len} from "std"
 import * from "./memory.ab"
 
-// Since we don't have `pub let`, we have to redefine constants.
-let tag_unused = 0
-let tag_num = 1
-let tag_text = 2
-let tag_t = 3
-let tag_nil = 4
-let tag_cons = 5
-
-
 fun memory_equal(m1: [Text], m2: [Text]): Bool {
     if len(m1) != len(m2) {
         return false
@@ -43,7 +34,7 @@ fun test_memory_new() {
 
     let mem3 = memory_new(10)
     loop i in 0..10 {
-        if memory_get_tag(mem3, i) != tag_unused {
+        if memory_get_tag(mem3, i) != tag_unused() {
             echo "memory_get_tag(mem3, {i}) = {memory_get_tag(mem3, i)}"
             echo "mem3 = {mem3}"
             fail 1
@@ -84,13 +75,13 @@ fun test_memory_get_set() {
     let cons_val_cdr = 0
 
     tag = memory_get_tag(mem, 0)
-    if tag != tag_unused {
+    if tag != tag_unused() {
         echo "memory_get_tag(mem, 0) = {tag}"
         fail 1
     }
     mem = memory_put_num(mem, 0, 123)
     tag = memory_get_tag(mem, 0)
-    if tag != tag_num {
+    if tag != tag_num() {
         echo "memory_get_tag(mem, 0) = {tag}"
         fail 1
     }
@@ -101,13 +92,13 @@ fun test_memory_get_set() {
     }
 
     tag = memory_get_tag(mem, 1)
-    if tag != tag_unused {
+    if tag != tag_unused() {
         echo "memory_get_tag(mem, 1) = {tag}"
         fail 1
     }
     mem = memory_put_text(mem, 1, "hello")
     tag = memory_get_tag(mem, 1)
-    if tag != tag_text {
+    if tag != tag_text() {
         echo "memory_get_tag(mem, 1) = {tag}"
         fail 1
     }
@@ -118,37 +109,37 @@ fun test_memory_get_set() {
     }
 
     tag = memory_get_tag(mem, 2)
-    if tag != tag_unused {
+    if tag != tag_unused() {
         echo "memory_get_tag(mem, 2) = {tag}"
         fail 1
     }
     mem = memory_put_t(mem, 2)
     tag = memory_get_tag(mem, 2)
-    if tag != tag_t {
+    if tag != tag_t() {
         echo "memory_get_tag(mem, 2) = {tag}"
         fail 1
     }
 
     tag = memory_get_tag(mem, 3)
-    if tag != tag_unused {
+    if tag != tag_unused() {
         echo "memory_get_tag(mem, 3) = {tag}"
         fail 1
     }
     mem = memory_put_nil(mem, 3)
     tag = memory_get_tag(mem, 3)
-    if tag != tag_nil {
+    if tag != tag_nil() {
         echo "memory_get_tag(mem, 3) = {tag}"
         fail 1
     }
 
     tag = memory_get_tag(mem, 4)
-    if tag != tag_unused {
+    if tag != tag_unused() {
         echo "memory_get_tag(mem, 4) = {tag}"
         fail 1
     }
     mem = memory_put_cons(mem, 4, 123, 456)
     tag = memory_get_tag(mem, 4)
-    if tag != tag_cons {
+    if tag != tag_cons() {
         echo "memory_get_tag(mem, 4) = {tag}"
         fail 1
     }
@@ -165,7 +156,7 @@ fun test_memory_get_set() {
 
     mem = memory_clear(mem, 4)
     tag = memory_get_tag(mem, 4)
-    if tag != tag_unused {
+    if tag != tag_unused() {
         echo "memory_get_tag(mem, 4) = {tag}"
         fail 1
     }
@@ -201,38 +192,38 @@ fun test_memory_garbage_collect() {
     mem = memory_garbage_collect(mem, refobj)
 
     let tag = memory_get_tag(mem, 0)
-    if tag != tag_text {
+    if tag != tag_text() {
         echo "memory_get_tag(mem, 0) = {tag}"
         fail 1
     }
     tag = memory_get_tag(mem, 1)
-    if tag != tag_cons {
+    if tag != tag_cons() {
         echo "memory_get_tag(mem, 1) = {tag}"
         fail 1
     }
     tag = memory_get_tag(mem, 2)
-    if tag != tag_text {
+    if tag != tag_text() {
         echo "memory_get_tag(mem, 2) = {tag}"
         fail 1
     }
     tag = memory_get_tag(mem, 3)
-    if tag != tag_cons {
+    if tag != tag_cons() {
         echo "memory_get_tag(mem, 3) = {tag}"
         fail 1
     }
     tag = memory_get_tag(mem, 4)
-    if tag != tag_text {
+    if tag != tag_text() {
         echo "memory_get_tag(mem, 4) = {tag}"
         fail 1
     }
     tag = memory_get_tag(mem, 5)
-    if tag != tag_nil {
+    if tag != tag_nil() {
         echo "memory_get_tag(mem, 5) = {tag}"
         fail 1
     }
     loop i in 6..=10 {
         tag = memory_get_tag(mem, i)
-        if tag != tag_unused {
+        if tag != tag_unused() {
             echo "memory_get_tag(mem, {i}) = {tag}"
             fail 1
         }
