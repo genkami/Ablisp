@@ -1,0 +1,49 @@
+// Package error provides error codes and results which may contain errors.
+
+import {len} from "std"
+
+pub fun new_ok(ptr: Num): [Text] {
+    return ["ok", ptr as Text]
+}
+
+pub fun new_err(code: Text, reason: Text): [Text] {
+    return ["err", code, reason]
+}
+
+pub fun result_is_ok(res: [Text]): Bool {
+    return res[0] == "ok"
+}
+
+pub fun result_is_err(res: [Text]): Bool {
+    return res[0] == "err"
+}
+
+#[allow_absurd_cast]
+pub fun result_ok_val(res: [Text]): Num {
+    return res[1]
+}
+
+pub fun result_err_code(res: [Text]): Text {
+    return res[1]
+}
+
+pub fun result_err_reason(res: [Text]): Text {
+    return res[2]
+}
+
+pub fun result_err_add_trace(res: [Text], trace: Text): [Text] {
+    return res + [trace]
+}
+
+pub fun result_err_traces(res: [Text]): [Text] {
+    let traces = [Text]
+    let i = 3
+    loop {
+        if len(res) <= i {
+            break
+        }
+        traces += [res[i]]
+        i += 1
+    }
+    return traces
+}

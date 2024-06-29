@@ -1,6 +1,6 @@
 // Module object manages Ablisp virtual memory and every Ablisp object.
 import {len} from "std"
-import * from "./object/memory.ab"
+import * from "./memory.ab"
 
 // Since we don't have `pub let`, we have to redefine constants.
 let tag_unused = 0
