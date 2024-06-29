@@ -2,6 +2,9 @@
 
 import {len} from "std"
 
+// Predefined error codes
+pub fun code_undefined_variable(): Text { return "undefined_variable" }
+
 pub fun new_ok(ptr: Num): [Text] {
     return ["ok", ptr as Text]
 }
