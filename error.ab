@@ -5,22 +5,26 @@ import {len} from "std"
 // Predefined error codes
 pub fun code_undefined_variable(): Text { return "undefined_variable" }
 
+// new_ok returns a new ok value.
 pub fun new_ok(ptr: Num): [Text] {
     return ["ok", ptr as Text]
 }
 
+// new_err returns a new err.
+// code should be a machine-readable Text to handle errors.
+// reason should be a human-readable Text to explain details.
 pub fun new_err(code: Text, reason: Text): [Text] {
     return ["err", code, reason]
 }
 
 // A value which can be either ok or error is called result.
-// result_is_ok returns true if and only if `res` is ok.
+// result_is_ok returns true if and only if a result is ok.
 pub fun result_is_ok(res: [Text]): Bool {
     return res[0] == "ok"
 }
 
 // A value which can be either ok or error is called result.
-// result_is_err returns true if and only if `res` is err.
+// result_is_err returns true if and only if a result is err.
 pub fun result_is_err(res: [Text]): Bool {
     return res[0] == "err"
 }
@@ -38,6 +42,15 @@ pub fun err_reason(res: [Text]): Text {
     return res[2]
 }
 
+// err_add_trace adds a trace to an err to indicate where the error happened.
+// Example:
+//     fun my_func(): [Text] {
+//         let result = do_something()
+//         if result_is_err(result) {
+//             return err_add_trace(err, "my_func")
+//         }
+//         // do something with result...
+//     }
 pub fun err_add_trace(res: [Text], trace: Text): [Text] {
     return res + [trace]
 }
