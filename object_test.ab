@@ -1,83 +1,40 @@
 import * from "./memory.ab"
 import * from "./object.ab"
+import * from "./testing.ab"
 
 fun test_object_new() {
+    test_section("test_object_new")
+
     debug_clear()
 
+    test_expectation("new_num allocates a new num")
     let ptr0 = new_num(123)
-    if ptr0 != 0 {
-        echo "new_num(...) = {ptr0}"
-        fail 1
-    }
-    let tag = tag_of(ptr0)
-    if tag != tag_num() {
-        echo "tag_of(ptr0) = {tag}"
-        fail 1
-    }
-    let num_val = num_value(ptr0)
-    if num_val != 123 {
-        echo "num_value(ptr0) = {num_val}"
-        fail 1
-    }
+    assert_equal_num(ptr0, 0)?
+    assert_equal_num(tag_of(ptr0), tag_num())?
+    assert_equal_num(num_value(ptr0), 123)?
 
+    test_expectation("new_text allocates a new text")
     let ptr1 = new_text("hoge")
-    if ptr1 != 1 {
-        echo "new_text(...) = {ptr1}"
-        fail 1
-    }
-    tag = tag_of(ptr1)
-    if tag != tag_text() {
-        echo "tag_of(ptr1) = {tag}"
-        fail 1
-    }
-    let text_val = text_value(ptr1)
-    if text_val != "hoge" {
-        echo "text_value(ptr1) = {text_val}"
-        fail 1
-    }
+    assert_equal_num(ptr1, 1)?
+    assert_equal_num(tag_of(ptr1), tag_text())?
+    assert_equal_text(text_value(ptr1), "hoge")?
 
+    test_expectation("new_t allocates a new `t`")
     let ptr2 = new_t()
-    if ptr2 != 2 {
-        echo "new_t() = {ptr2}"
-        fail 1
-    }
-    tag = tag_of(ptr2)
-    if tag != tag_t() {
-        echo "tag_of(ptr2) = {tag}"
-        fail 1
-    }
+    assert_equal_num(ptr2, 2)?
+    assert_equal_num(tag_of(ptr2), tag_t())?
 
+    test_expectation("new_nil allocates a new `nil`")
     let ptr3 = new_nil()
-    if ptr3 != 3 {
-        echo "new_nil() = {ptr3}"
-        fail 1
-    }
-    tag = tag_of(ptr3)
-    if tag != tag_nil() {
-        echo "tag_of(ptr3) = {tag}"
-        fail 1
-    }
+    assert_equal_num(ptr3, 3)?
+    assert_equal_num(tag_of(ptr3), tag_nil())?
 
+    test_expectation("new_cons allocates a new cons-cell")
     let ptr4 = new_cons(0, 1)
-    if ptr4 != 4 {
-        echo "new_cons(..) = {ptr4}"
-        fail 1
-    }
-    tag = tag_of(ptr4)
-    if tag != tag_cons() {
-        echo "tag_of(ptr4) = {tag}"
-        fail 1
-    }
-    let car = cons_car(ptr4)
-    if car != 0 {
-        echo "cons_car(ptr4) = {car}"
-        fail 1
-    }
-    let cdr = cons_cdr(ptr4)
-    if cdr != 1 {
-        echo "cons_cdr(ptr4) = {cdr}"
-        fail 1
-    }
+    assert_equal_num(ptr4, 4)?
+    assert_equal_num(tag_of(ptr4), tag_cons())?
+    assert_equal_num(cons_car(ptr4), 0)?
+    assert_equal_num(cons_cdr(ptr4), 1)?
 
     // 3 is nil
     // 4 is a cons-cell which references 0 and 1
@@ -85,23 +42,17 @@ fun test_object_new() {
     let refptrs = [4, 3]
     garbage_collect(refptrs)
 
+    test_expectation("new_XXX reuses garbage collected objects")
     let ptr5 = new_num(999)
-    if ptr5 != 2 {
-        echo "2 should be reused, got {ptr5}"
-        fail 1
-    }
+    assert_equal_num(ptr5, 2)?
+
+    test_expectation("new_XXX does not reuse reachable objects")
     let ptr6 = new_num(888)
-    if ptr6 != 5 {
-        echo "objects garbage collected unexpectedly: {ptr6}"
-        fail 1
-    }
+    assert_equal_num(ptr6, 5)?
 }
 
 pub fun test_object() {
-    test_object_new() failed {
-        echo "test_object_new failed"
-        fail 1
-    }
+    test_object_new()?
 }
 
 main {
