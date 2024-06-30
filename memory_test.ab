@@ -1,168 +1,88 @@
 import {len} from "std"
 import * from "./memory.ab"
-
-fun memory_equal(m1: [Text], m2: [Text]): Bool {
-    if len(m1) != len(m2) {
-        return false
-    }
-    // NOTE: don't use `loop i in 0..X` since it produces `seq 0 -1` when `X == 0`
-    let i = 0
-    loop {
-        if len(m1) <= i {
-            break
-        }
-        if m1[i] != m2[i] {
-            return false
-        }
-        i += 1
-    }
-    return true
-}
+import * from "./testing.ab"
 
 fun test_memory_new() {
+    test_section("test_memory_new")
+
+    test_expectation("memory_new(0) returns an empty memory")
     let mem1 = memory_new(0)
-    if not memory_equal(mem1, [Text]) {
-        echo "memory_new(0) = {mem1}"
-        fail 1
-    }
+    assert_equal_text_array(mem1, [Text])?
 
+    test_expectation("memory_new(n) returns an array with 3*n zeroes")
     let mem2 = memory_new(2)
-    if not memory_equal(mem2, ["0", "0", "0", "0", "0", "0"]) {
-        echo "memory_new(5) = {mem2}"
-        fail 1
-    }
+    assert_equal_text_array(mem2, ["0", "0", "0", "0", "0", "0"])?
 
+    test_expectation("every element in an memory returned by memory_new() should be unused")
     let mem3 = memory_new(10)
     loop i in 0..10 {
-        if memory_get_tag(mem3, i) != tag_unused() {
-            echo "memory_get_tag(mem3, {i}) = {memory_get_tag(mem3, i)}"
-            echo "mem3 = {mem3}"
-            fail 1
-        }
+        assert_equal_num(memory_get_tag(mem3, i), tag_unused())?
     }
 }
 
 fun test_memory_grow() {
+    test_section("test_memory_grow")
+
+    test_expectation("if a memory is empty, memory_grow returns a zero memory with the default size")
     let mem1 = [Text]
     mem1 = memory_grow(mem1)
-    if not memory_equal(mem1, ["0", "0", "0", "0", "0", "0"]) {
-        echo "memory_grow(mem1) = {mem1}"
-        fail 1
-    }
-    
+    assert_equal_text_array(mem1, ["0", "0", "0", "0", "0", "0"])?
+
+    test_expectation("if a memory is too short, memory_grow extends it to the default size")
     let mem2 = ["a", "b"]
     mem2 = memory_grow(mem2)
-    if not memory_equal(mem2, ["a", "b", "0", "0", "0", "0"]) {
-        echo "memory_grow(mem2) = {mem2}"
-        fail 1
-    }
+    assert_equal_text_array(mem2, ["a", "b", "0", "0", "0", "0"])?
 
+    test_expectation("memory_grow doubles the length of a memory")
     let mem3 = ["a", "b", "c", "d"]
     mem3 = memory_grow(mem3)
-    if not memory_equal(mem3, ["a", "b", "c", "d", "0", "0", "0", "0"]) {
-        echo "memory_grow(mem3) = {mem3}"
-        fail 1
-    }
+    assert_equal_text_array(mem3, ["a", "b", "c", "d", "0", "0", "0", "0"])?
 }
 
 fun test_memory_get_set() {
+    test_section("test_memory_get_set")
     let mem = memory_new(100)
-    let tag = 0
-    let num_val = 0
-    let text_val = ""
-    let bool_val = false
-    let cons_val_car = 0
-    let cons_val_cdr = 0
 
-    tag = memory_get_tag(mem, 0)
-    if tag != tag_unused() {
-        echo "memory_get_tag(mem, 0) = {tag}"
-        fail 1
-    }
+    test_expectation("an initial state of a memory element should be unused")
+    assert_equal_num(memory_get_tag(mem, 0), tag_unused())?
+
+    test_expectation("memory_put_num puts a num to a memory")
     mem = memory_put_num(mem, 0, 123)
-    tag = memory_get_tag(mem, 0)
-    if tag != tag_num() {
-        echo "memory_get_tag(mem, 0) = {tag}"
-        fail 1
-    }
-    num_val = memory_get_num(mem, 0)
-    if num_val != 123 {
-        echo "memory_get_num(mem, 0) = {num_val}"
-        fail 1
-    }
+    assert_equal_num(memory_get_tag(mem, 0), tag_num())?
+    assert_equal_num(memory_get_num(mem, 0), 123)?
 
-    tag = memory_get_tag(mem, 1)
-    if tag != tag_unused() {
-        echo "memory_get_tag(mem, 1) = {tag}"
-        fail 1
-    }
+    test_expectation("memory_put_text puts a num to a memory")
+    assert_equal_num(memory_get_tag(mem, 1), tag_unused())?
     mem = memory_put_text(mem, 1, "hello")
-    tag = memory_get_tag(mem, 1)
-    if tag != tag_text() {
-        echo "memory_get_tag(mem, 1) = {tag}"
-        fail 1
-    }
-    text_val = memory_get_text(mem, 1)
-    if text_val != "hello" {
-        echo "memory_get_text(mem, 1) = {text_val}"
-        fail 1
-    }
+    assert_equal_num(memory_get_tag(mem, 1), tag_text())?
+    assert_equal_text(memory_get_text(mem, 1), "hello")?
 
-    tag = memory_get_tag(mem, 2)
-    if tag != tag_unused() {
-        echo "memory_get_tag(mem, 2) = {tag}"
-        fail 1
-    }
+    test_expectation("memory_put_t puts `t` to a memory")
+    assert_equal_num(memory_get_tag(mem, 2), tag_unused())?
     mem = memory_put_t(mem, 2)
-    tag = memory_get_tag(mem, 2)
-    if tag != tag_t() {
-        echo "memory_get_tag(mem, 2) = {tag}"
-        fail 1
-    }
+    assert_equal_num(memory_get_tag(mem, 2), tag_t())?
 
-    tag = memory_get_tag(mem, 3)
-    if tag != tag_unused() {
-        echo "memory_get_tag(mem, 3) = {tag}"
-        fail 1
-    }
+    test_expectation("memory_put_nil puts `nil` to a memory")
+    assert_equal_num(memory_get_tag(mem, 3), tag_unused())?
     mem = memory_put_nil(mem, 3)
-    tag = memory_get_tag(mem, 3)
-    if tag != tag_nil() {
-        echo "memory_get_tag(mem, 3) = {tag}"
-        fail 1
-    }
+    assert_equal_num(memory_get_tag(mem, 3), tag_nil())?
 
-    tag = memory_get_tag(mem, 4)
-    if tag != tag_unused() {
-        echo "memory_get_tag(mem, 4) = {tag}"
-        fail 1
-    }
+    test_expectation("memory_put_cons puts a cons-cell to a memory")
+    assert_equal_num(memory_get_tag(mem, 4), tag_unused())?
     mem = memory_put_cons(mem, 4, 123, 456)
-    tag = memory_get_tag(mem, 4)
-    if tag != tag_cons() {
-        echo "memory_get_tag(mem, 4) = {tag}"
-        fail 1
-    }
-    cons_val_car = memory_get_cons_car(mem, 4)
-    if cons_val_car != 123 {
-        echo "memory_get_cons_car(mem, 4) = {cons_val_car}"
-        fail 1
-    }
-    cons_val_cdr = memory_get_cons_cdr(mem, 4)
-    if cons_val_cdr != 456 {
-        echo "memory_get_cons_cdr(mem, 4) = {cons_val_cdr}"
-        fail 1
-    }
+    assert_equal_num(memory_get_tag(mem, 4), tag_cons())?
+    assert_equal_num(memory_get_cons_car(mem, 4), 123)?
+    assert_equal_num(memory_get_cons_cdr(mem, 4), 456)?
 
+    test_expectation("memory_clear clears a given element")
     mem = memory_clear(mem, 4)
-    tag = memory_get_tag(mem, 4)
-    if tag != tag_unused() {
-        echo "memory_get_tag(mem, 4) = {tag}"
-        fail 1
-    }
+    assert_equal_num(memory_get_tag(mem, 4), tag_unused())?
 }
 
 fun test_memory_garbage_collect() {
+    test_section("test_memory_garbage_collect")
+    test_expectation("memory_garbage_collect clears all objects that are not reachable")
+
     // - obj 0 is referenced
     // - obj 1 is referenced and references 2 and 3
     // - obj 2 is referenced by obj 1
@@ -191,62 +111,22 @@ fun test_memory_garbage_collect() {
     refobj[1] = true
     mem = memory_garbage_collect(mem, refobj)
 
-    let tag = memory_get_tag(mem, 0)
-    if tag != tag_text() {
-        echo "memory_get_tag(mem, 0) = {tag}"
-        fail 1
-    }
-    tag = memory_get_tag(mem, 1)
-    if tag != tag_cons() {
-        echo "memory_get_tag(mem, 1) = {tag}"
-        fail 1
-    }
-    tag = memory_get_tag(mem, 2)
-    if tag != tag_text() {
-        echo "memory_get_tag(mem, 2) = {tag}"
-        fail 1
-    }
-    tag = memory_get_tag(mem, 3)
-    if tag != tag_cons() {
-        echo "memory_get_tag(mem, 3) = {tag}"
-        fail 1
-    }
-    tag = memory_get_tag(mem, 4)
-    if tag != tag_text() {
-        echo "memory_get_tag(mem, 4) = {tag}"
-        fail 1
-    }
-    tag = memory_get_tag(mem, 5)
-    if tag != tag_nil() {
-        echo "memory_get_tag(mem, 5) = {tag}"
-        fail 1
-    }
+    assert_equal_num(memory_get_tag(mem, 0), tag_text())?
+    assert_equal_num(memory_get_tag(mem, 1), tag_cons())?
+    assert_equal_num(memory_get_tag(mem, 2), tag_text())?
+    assert_equal_num(memory_get_tag(mem, 3), tag_cons())?
+    assert_equal_num(memory_get_tag(mem, 4), tag_text())?
+    assert_equal_num(memory_get_tag(mem, 5), tag_nil())?
     loop i in 6..=10 {
-        tag = memory_get_tag(mem, i)
-        if tag != tag_unused() {
-            echo "memory_get_tag(mem, {i}) = {tag}"
-            fail 1
-        }
+        assert_equal_num(memory_get_tag(mem, i), tag_unused())?
     }
 }
 
 pub fun test_memory() {
-    test_memory_new() failed {
-        echo "test_memory_new failed"
-        fail 1
-    }
-    test_memory_grow() failed {
-        echo "test_memory_grow failed"
-        fail 1
-    }
-    test_memory_get_set() failed {
-        echo "test_memory_get_set failed"
-        fail 1
-    }
-    test_memory_garbage_collect() failed {
-        echo "test_memory_garbage_collect failed"
-        fail 1
-    }
+    test_memory_new()?
+    test_memory_grow()?
+    test_memory_get_set()?
+    test_memory_garbage_collect()?
 }
 
 main {
