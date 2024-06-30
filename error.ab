@@ -13,10 +13,14 @@ pub fun new_err(code: Text, reason: Text): [Text] {
     return ["err", code, reason]
 }
 
+// A value which can be either ok or error is called result.
+// result_is_ok returns true if and only if `res` is ok.
 pub fun result_is_ok(res: [Text]): Bool {
     return res[0] == "ok"
 }
 
+// A value which can be either ok or error is called result.
+// result_is_err returns true if and only if `res` is err.
 pub fun result_is_err(res: [Text]): Bool {
     return res[0] == "err"
 }

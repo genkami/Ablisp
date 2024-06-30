@@ -1,92 +1,37 @@
 import {len} from "std"
 import * from "./error.ab"
-
-fun traces_equal(tr1: [Text], tr2: [Text]): Bool {
-    if len(tr1) != len(tr2) {
-        return false
-    }
-    let i = 0
-    loop {
-        if len(tr1) <= i {
-            break
-        }
-        if tr1[i] != tr2[i] {
-            return false
-        }
-        i += 1
-    }
-    return true
-}
+import * from "./testing.ab"
 
 fun test_error_ok() {
+    test_section("test_error_ok")
+    test_expectation("new_ok() returns an ok with a given value")
     let res = new_ok(123)
-    if not result_is_ok(res) {
-        echo "res should be ok, got {res}"
-        fail 1
-    }
-    if result_is_err(res) {
-        echo "res should not be err, got {res}"
-        fail 1
-    }
-    if ok_val(res) != 123 {
-        echo "res should be 123, got {res}"
-        fail 1
-    }
+    assert(result_is_ok(res), "res should be ok, got {res}")?
+    assert(not result_is_err(res), "res should not be err, got {res}")?
+    assert_equal_num(ok_val(res), 123)?
 }
 
 fun test_error_err() {
+    test_section("test_error_err")
+    test_expectation("new_err() returns an err with a given code and reason")
     let res = new_err("dummy_code", "dummy reason")
-    if not result_is_err(res) {
-        echo "res should be err, got {res}"
-        fail 1
-    }
-    if result_is_ok(res) {
-        echo "res should not be ok, got {res}"
-        fail 1
-    }
-    let code = err_code(res)
-    if code != "dummy_code" {
-        echo "unexpected code: {code}"
-        fail 1
-    }
-    let reason = err_reason(res)
-    if reason != "dummy reason" {
-        echo "unexpected reason: {reason}"
-        fail 1
-    }
-    let trace = err_traces(res)
-    let want = [Text]
-    if not traces_equal(trace, want) {
-        echo "trace mismatch: want={want}, got={trace}"
-        fail 1
-    }
+    assert(result_is_err(res), "res should be err, got {res}")?
+    assert(not result_is_ok(res), "res should not be ok, got {res}")?
+    assert_equal_text(err_code(res), "dummy_code")?
+    assert_equal_text(err_reason(res), "dummy reason")?
+    assert_equal_text_array(err_traces(res), [Text])?
 
+    test_expectation("err_add_trace adds a trace to an err")
     res = err_add_trace(res, "func1")
-    trace = err_traces(res)
-    want = ["func1"]
-    if not traces_equal(trace, want) {
-        echo "trace mismatch: want={want}, got={trace}"
-        fail 1
-    }
+    assert_equal_text_array(err_traces(res), ["func1"])?
 
     res = err_add_trace(res, "outer_func")
-    trace = err_traces(res)
-    want = ["func1", "outer_func"]
-    if not traces_equal(trace, want) {
-        echo "trace mismatch: want={want}, got={trace}"
-        fail 1
-    }
+    assert_equal_text_array(err_traces(res), ["func1", "outer_func"])?
 }
 
 pub fun test_error() {
-    test_error_ok() failed {
-        echo "test_error_ok failed"
-        fail 1
-    }
-    test_error_err() failed {
-        echo "test_error_err failed"
-        fail 1
-    }
+    test_error_ok()?
+    test_error_err()?
 }
 
 main {

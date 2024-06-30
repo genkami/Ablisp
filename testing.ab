@@ -1,5 +1,6 @@
 // Module testing provides test helpers.
 
+import {len} from "std"
 import * from "./error.ab"
 
 let _test_section = ""
@@ -26,6 +27,51 @@ pub fun assert_equal_num(lhs: Num, rhs: Num): Null {
 
 pub fun assert_equal_text(lhs: Text, rhs: Text): Null {
     assert(lhs == rhs, "value mismatch:\nlhs={lhs}\nrhs={rhs}")?
+}
+
+fun text_array_equal(s1: [Text], s2: [Text]): Bool {
+    if len(s1) != len(s2) {
+        return false
+    }
+    let i = 0
+    loop {
+        if len(s1) <= i {
+            break
+        }
+        if s1[i] != s2[i] {
+            return false
+        }
+        i += 1
+    }
+    return true
+}
+
+pub fun assert_equal_text_array(lhs: [Text], rhs: [Text]): Null {
+    let msg = "value mismatch:\nlhs="
+    let i = 0
+    loop {
+        if len(lhs) <= i {
+            break
+        }
+        if i != 0 {
+            msg += " "
+        }
+        msg += lhs[i]
+        i += 1
+    }
+    msg += "\nrhs="
+    i = 0
+    loop {
+        if len(rhs) <= i {
+            break
+        }
+        if i != 0 {
+            msg += " "
+        }
+        msg += rhs[i]
+        i += 1
+    }
+    assert(text_array_equal(lhs, rhs), msg)?
 }
 
 pub fun assert_ok(result: [Text]): Null {
