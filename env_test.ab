@@ -1,140 +1,70 @@
 import * from "./env.ab"
 import * from "./error.ab"
+import * from "./testing.ab"
 
 fun test_env_lookup() {
+    test_section("test_env_lookup")
+
     let env = new_env()
 
+    test_expectation("env_lookup on an empty env should return undefined_variable")
     let result = env_lookup(env, "foo")
-    if not result_is_err(result) {
-        echo "result should be err, got {result}"
-        fail 1
-    }
-    let code = err_code(result)
-    if code != code_undefined_variable() {
-        echo "got unexpected code: {code}"
-        fail 1
-    }
+    assert_err_code(result, code_undefined_variable())?
 
+    test_expectation("if a variable is defined, env_lookup should return its value")
     env = env_define(env, "foo", 123)
     result = env_lookup(env, "foo")
-    if not result_is_ok(result) {
-        echo "result should be ok, got {result}"
-        fail 1
-    }
-    let val = ok_val(result)
-    if val != 123 {
-        echo "expected 123, got {val}"
-        fail 1
-    }
+    assert_ok_val(result, 123)?
 
+    test_expectation("adding a new variable definition does not affect existing definitions")
     env = env_define(env, "bar", 456)
     result = env_lookup(env, "foo")
-    if not result_is_ok(result) {
-        echo "result should be ok, got {result}"
-        fail 1
-    }
-    let val = ok_val(result)
-    if val != 123 {
-        echo "expected 123, got {val}"
-        fail 1
-    }
+    assert_ok_val(result, 123)?
+    
     result = env_lookup(env, "bar")
-    if not result_is_ok(result) {
-        echo "result should be ok, got {result}"
-        fail 1
-    }
-    let val = ok_val(result)
-    if val != 456 {
-        echo "expected 456, got {val}"
-        fail 1
-    }
+    assert_ok_val(result, 456)?
 
-    env = env_define(env, "foo", 999) // same var in an inner scope
+    test_expectation("a variable in an inner scope can have the same name as the one in an outer scope")
+    env = env_define(env, "foo", 999)
     result = env_lookup(env, "foo")
-    if not result_is_ok(result) {
-        echo "result should be ok, got {result}"
-        fail 1
-    }
-    let val = ok_val(result)
-    if val != 999 {
-        echo "expected 999, got {val}"
-        fail 1
-    }
+    assert_ok_val(result, 999)?
 }
 
 fun test_env_set() {
+    test_section("test_env_set")
+
     let env = new_env()
     env = env_define(env, "foo", 111)
     env = env_define(env, "bar", 222)
 
+    test_expectation("in an inner scope, env_lookup should return the variable in the innermost scope")
     let child_env = env_define(env, "foo", 333)
-
     let result = env_lookup(child_env, "foo")
-    if not result_is_ok(result) {
-        echo "result should be ok, got {result}"
-        fail 1
-    }
-    let val = ok_val(result)
-    if val != 333 {
-        echo "expected 333, got {val}"
-        fail 1
-    }
+    assert_ok_val(result, 333)?
 
+    test_expectation("env_set should modify the variable in the innermost scope")
     child_env = env_set(child_env, "foo", 444)
-    child_env = env_set(child_env, "bar", 555)
     result = env_lookup(child_env, "foo")
-    if not result_is_ok(result) {
-        echo "result should be ok, got {result}"
-        fail 1
-    }
-    val = ok_val(result)
-    if val != 444 {
-        echo "expected 444, got {val}"
-        fail 1
-    }
-    result = env_lookup(child_env, "bar")
-    if not result_is_ok(result) {
-        echo "result should be ok, got {result}"
-        fail 1
-    }
-    val = ok_val(result)
-    if val != 555 {
-        echo "expected 555, got {val}"
-        fail 1
-    }
+    assert_ok_val(result, 444)?
 
+    test_expectation("env_set can modify the variable in an outer scope if its name doesn't conflict with a variable in an inner scope")
+    child_env = env_set(child_env, "bar", 555)
+    result = env_lookup(child_env, "bar")
+    assert_ok_val(result, 555)?
+
+    test_expectation("env_apply_child_update applies updates in an outer scope")
     env = env_apply_child_update(env, child_env)
-    result = env_lookup(env, "foo")
-    if not result_is_ok(result) {
-        echo "result should be ok, got {result}"
-        fail 1
-    }
-    val = ok_val(result)
-    if val != 111 {
-        echo "expected 111, got {val}"
-        fail 1
-    }
     result = env_lookup(env, "bar")
-    if not result_is_ok(result) {
-        echo "result should be ok, got {result}"
-        fail 1
-    }
-    val = ok_val(result)
-    if val != 555 {
-        echo "expected 555, got {val}"
-        fail 1
-    }
+    assert_ok_val(result, 555)?
+
+    test_expectation("env_apply_child_update discards changes in an inner scope") 
+    result = env_lookup(env, "foo")
+    assert_ok_val(result, 111)?
 }
 
 pub fun test_env() {
-    test_env_lookup() failed {
-        echo "test_env_lookup failed"
-        fail 1
-    }
-    test_env_set() failed {
-        echo "test_env_set failed"
-        fail 1
-    }
+    test_env_lookup()?
+    test_env_set()?
 }
 
 main {

@@ -1,0 +1,47 @@
+// Module testing provides test helpers.
+
+import * from "./error.ab"
+
+let _test_section = ""
+let _test_expectation = ""
+
+pub fun test_section(section: Text): Null {
+    _test_section = section
+}
+
+pub fun test_expectation(expectation: Text): Null {
+    _test_expectation = expectation
+}
+
+pub fun assert(expr: Bool, msg: Text): Null {
+    if not expr {
+        echo "{_test_section}: {_test_expectation}\n{msg}"
+        fail 1
+    }
+}
+
+pub fun assert_equal_num(lhs: Num, rhs: Num): Null {
+    assert(lhs == rhs, "value mismatch: lhs={lhs}, rhs={rhs}")?
+}
+
+pub fun assert_equal_text(lhs: Text, rhs: Text): Null {
+    assert(lhs == rhs, "value mismatch:\nlhs={lhs}\nrhs={rhs}")?
+}
+
+pub fun assert_ok(result: [Text]): Null {
+    assert(result_is_ok(result), "value is not ok: {result}")?
+}
+
+pub fun assert_ok_val(result: [Text], val: Num): Null {
+    assert_ok(result)?
+    assert_equal_num(ok_val(result), val)?
+}
+
+pub fun assert_err(result: [Text]): Null {
+    assert(result_is_err(result), "value is not err: {result}")?
+}
+
+pub fun assert_err_code(result: [Text], code: Text): Null {
+    assert_err(result)?
+    assert_equal_text(err_code(result), code)?
+}
