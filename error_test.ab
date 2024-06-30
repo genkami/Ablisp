@@ -28,6 +28,10 @@ fun test_error_ok() {
         echo "res should not be err, got {res}"
         fail 1
     }
+    if ok_val(res) != 123 {
+        echo "res should be 123, got {res}"
+        fail 1
+    }
 }
 
 fun test_error_err() {
@@ -40,33 +44,33 @@ fun test_error_err() {
         echo "res should not be ok, got {res}"
         fail 1
     }
-    let code = result_err_code(res)
+    let code = err_code(res)
     if code != "dummy_code" {
         echo "unexpected code: {code}"
         fail 1
     }
-    let reason = result_err_reason(res)
+    let reason = err_reason(res)
     if reason != "dummy reason" {
         echo "unexpected reason: {reason}"
         fail 1
     }
-    let trace = result_err_traces(res)
+    let trace = err_traces(res)
     let want = [Text]
     if not traces_equal(trace, want) {
         echo "trace mismatch: want={want}, got={trace}"
         fail 1
     }
 
-    res = result_err_add_trace(res, "func1")
-    trace = result_err_traces(res)
+    res = err_add_trace(res, "func1")
+    trace = err_traces(res)
     want = ["func1"]
     if not traces_equal(trace, want) {
         echo "trace mismatch: want={want}, got={trace}"
         fail 1
     }
 
-    res = result_err_add_trace(res, "outer_func")
-    trace = result_err_traces(res)
+    res = err_add_trace(res, "outer_func")
+    trace = err_traces(res)
     want = ["func1", "outer_func"]
     if not traces_equal(trace, want) {
         echo "trace mismatch: want={want}, got={trace}"

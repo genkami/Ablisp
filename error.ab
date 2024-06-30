@@ -22,23 +22,23 @@ pub fun result_is_err(res: [Text]): Bool {
 }
 
 #[allow_absurd_cast]
-pub fun result_ok_val(res: [Text]): Num {
+pub fun ok_val(res: [Text]): Num {
+    return res[1] as Num
+}
+
+pub fun err_code(res: [Text]): Text {
     return res[1]
 }
 
-pub fun result_err_code(res: [Text]): Text {
-    return res[1]
-}
-
-pub fun result_err_reason(res: [Text]): Text {
+pub fun err_reason(res: [Text]): Text {
     return res[2]
 }
 
-pub fun result_err_add_trace(res: [Text], trace: Text): [Text] {
+pub fun err_add_trace(res: [Text], trace: Text): [Text] {
     return res + [trace]
 }
 
-pub fun result_err_traces(res: [Text]): [Text] {
+pub fun err_traces(res: [Text]): [Text] {
     let traces = [Text]
     let i = 3
     loop {
