@@ -4,6 +4,7 @@ import {len} from "std"
 
 // Predefined error codes
 pub fun code_undefined_variable(): Text { return "undefined_variable" }
+pub fun code_invalid_argument(): Text { return "invalid_argument" }
 
 // new_ok returns a new ok value.
 pub fun new_ok(ptr: Num): [Text] {

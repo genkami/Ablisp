@@ -1,6 +1,7 @@
 // Module testing provides test helpers.
 
 import {len} from "std"
+import * from "./object.ab"
 import * from "./error.ab"
 
 let _test_section = ""
@@ -74,6 +75,18 @@ pub fun assert_equal_text_array(lhs: [Text], rhs: [Text]): Null {
     assert(text_array_equal(lhs, rhs), msg)?
 }
 
+pub fun assert_object_eqv(lhs: Num, rhs: Num): Null {
+    let lhs_text = object_to_string(lhs)
+    let rhs_text = object_to_string(rhs)
+    assert(object_eqv(lhs, rhs), "value mismatch:\nlhs={lhs_text}\nrhs={rhs_text}")
+}
+
+pub fun assert_object_equal(lhs: Num, rhs: Num): Null {
+    let lhs_text = object_to_string(lhs)
+    let rhs_text = object_to_string(rhs)
+    assert(object_equal(lhs, rhs), "value mismatch:\nlhs={lhs_text}\nrhs={rhs_text}")
+}
+
 pub fun assert_ok(result: [Text]): Null {
     assert(result_is_ok(result), "value is not ok: {result}")?
 }
@@ -81,6 +94,16 @@ pub fun assert_ok(result: [Text]): Null {
 pub fun assert_ok_val(result: [Text], val: Num): Null {
     assert_ok(result)?
     assert_equal_num(ok_val(result), val)?
+}
+
+pub fun assert_ok_object_eqv(result: [Text], obj: Num): Null {
+    assert_ok(result)?
+    assert_object_eqv(ok_val(result), obj)?
+}
+
+pub fun assert_ok_object_equal(result: [Text], obj: Num): Null {
+    assert_ok(result)?
+    assert_object_equal(ok_val(result), obj)?
 }
 
 pub fun assert_err(result: [Text]): Null {

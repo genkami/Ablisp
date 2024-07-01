@@ -1,3 +1,4 @@
+import * from "./object.ab"
 import * from "./env.ab"
 import * from "./error.ab"
 import * from "./testing.ab"
@@ -8,12 +9,12 @@ fun test_env_lookup() {
     let env = new_env()
 
     test_expectation("env_lookup on an empty env should return undefined_variable")
-    let result = env_lookup(env, "foo")
+    let result = env_lookup(env, new_text("foo"))
     assert_err_code(result, code_undefined_variable())?
 
     test_expectation("if a variable is defined, env_lookup should return its value")
-    env = env_define(env, "foo", 123)
-    result = env_lookup(env, "foo")
+    env = env_define(env, new_text("foo"), new_num(123))
+    result = env_lookup(env, new_text("foo"))
     assert_ok_val(result, 123)?
 
     test_expectation("adding a new variable definition does not affect existing definitions")

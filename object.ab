@@ -63,6 +63,26 @@ pub fun tag_of(ptr: Num): Num {
     return memory_get_tag(the_memory, ptr)
 }
 
+pub fun object_is_num(ptr: Num): Bool {
+    return tag_of(ptr) == tag_num()
+}
+
+pub fun object_is_text(ptr: Num): Bool {
+    return tag_of(ptr) == tag_text()
+}
+
+pub fun object_is_t(ptr: Num): Bool {
+    return tag_of(ptr) == tag_t()
+}
+
+pub fun object_is_nil(ptr: Num): Bool {
+    return tag_of(ptr) == tag_nil()
+}
+
+pub fun object_is_cons(ptr: Num): Bool {
+    return tag_of(ptr) == tag_cons()
+}
+
 pub fun num_value(ptr: Num): Num {
     return memory_get_num(the_memory, ptr)
 }
@@ -79,6 +99,36 @@ pub fun cons_cdr(ptr: Num): Num {
     return memory_get_cons_cdr(the_memory, ptr)
 }
 
+pub fun object_set_num(ptr: Num, value: Num) {
+    memory_put_num(the_memory, ptr, value)
+}
+
+pub fun object_set_text(ptr: Num, value: Text) {
+    memory_put_text(the_memory, ptr, value)
+}
+
+pub fun object_set_t(ptr: Num) {
+    memory_put_t(the_memory, ptr)
+}
+
+pub fun object_set_nil(ptr: Num) {
+    memory_put_nil(the_memory, ptr)
+}
+
+pub fun object_set_cons(ptr: Num, car: Num, cdr: Num) {
+    memory_put_cons(the_memory, ptr, car, cdr)
+}
+
+pub fun cons_set_car(ptr: Num, car: Num) {
+    let cdr = memory_get_cons_cdr(ptr)
+    memory_put_cons(the_memory, ptr, car, cdr)
+}
+
+pub fun cons_set_cdr(ptr: Num, cdr: Num) {
+    let car = memory_get_cons_car(ptr)
+    memory_put_cons(the_memory, ptr, car, cdr)
+}
+
 pub fun garbage_collect(addrs: [Num]): Null {
     let referenced_objects = init_referenced_objects(memory_get_max_objects(the_memory))
     let i = 0
@@ -93,7 +143,7 @@ pub fun garbage_collect(addrs: [Num]): Null {
     the_memory = memory_garbage_collect(the_memory, referenced_objects)
 }
 
-pub fun object_eq(ptr1: Num, ptr2: Num): Bool {
+pub fun object_eqv(ptr1: Num, ptr2: Num): Bool {
     let tag1 = tag_of(ptr1)
     let tag2 = tag_of(ptr2)
     if tag1 == tag_num() {
@@ -136,4 +186,32 @@ pub fun object_equal(ptr1: Num, ptr2: Num): Bool {
         }
         return true
     }
+}
+
+pub fun object_to_string(ptr: Num): Text {
+    let tag = tag_of(ptr)
+
+    if tag == tag_unused() {
+        return "<unused: {ptr}>"
+    }
+    if tag == tag_num() {
+        return "{ptr}"
+    }
+    if tag == tag_text() {
+        return "'{ptr}'"
+    }
+    if tag == tag_t() {
+        return "t"
+    }
+    if tag == tag_nil() {
+        return "nil"
+    }
+    if tag == tag_cons() {
+        let car = cons_car(ptr)
+        let cdr = cons_cdr(ptr)
+        let car_str = object_to_string(car)
+        let cdr_str = object_to_string(cdr)
+        return "(cons {car} {cdr})"
+    }
+    return "<invalid: {ptr} tag={tag}>"
 }
