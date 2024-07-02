@@ -17,6 +17,10 @@ import * from "./callstack.ab"
 //              An object with index `k` is stored in memory[3*k], memory[3*k+1], and memory[3*k+2].
 let the_memory = [Text]
 
+// Pointer to a resource that was allcoated the last time by new_XXX.
+// There's no guarantee that, for example, last_allocated+1 is vacant.
+let last_allocated = 0
+
 // Since we don't have `pub const` or `pub let`,
 // we have to define constants as functions.
 pub fun tag_unused(): Num { return 0 }
@@ -49,6 +53,7 @@ fun memory_get_max_objects(): Num {
 
 pub fun debug_clear_all_objects(): Null {
     the_memory = memory_new(0)
+    last_allocated = 0
 }
 
 pub fun debug_dump_current_memory(): [Text] {
@@ -141,13 +146,17 @@ fun object_clear(ptr: Num): Null {
 
 fun find_next_place(): Num {
     let max_objs = memory_get_max_objects()
-    let i = 0
+    let i = last_allocated + 1
     loop {
         if max_objs <= i {
+            i = 0
+        }
+        if i == last_allocated {
             break
         }
         let tag = tag_of(i)
         if tag == tag_unused() {
+            last_allocated = i
             return i
         }
         i += 1
@@ -171,6 +180,7 @@ fun find_next_place(): Num {
     the_memory = new_mem
 
     // Now max_objs is the first vacant space
+    last_allocated = max_objs
     return max_objs
 }
 
