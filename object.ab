@@ -1,6 +1,7 @@
 // Module object manages Ablisp virtual memory and every Ablisp object.
 import {len} from "std"
 import * from "./memory.ab"
+import * from "./callstack.ab"
 
 let the_memory = [Text]
 
@@ -99,33 +100,33 @@ pub fun cons_cdr(ptr: Num): Num {
     return memory_get_cons_cdr(the_memory, ptr)
 }
 
-pub fun object_set_num(ptr: Num, value: Num) {
+pub fun object_set_num(ptr: Num, value: Num): Null {
     memory_put_num(the_memory, ptr, value)
 }
 
-pub fun object_set_text(ptr: Num, value: Text) {
+pub fun object_set_text(ptr: Num, value: Text): Null {
     memory_put_text(the_memory, ptr, value)
 }
 
-pub fun object_set_t(ptr: Num) {
+pub fun object_set_t(ptr: Num): Null {
     memory_put_t(the_memory, ptr)
 }
 
-pub fun object_set_nil(ptr: Num) {
+pub fun object_set_nil(ptr: Num): Null {
     memory_put_nil(the_memory, ptr)
 }
 
-pub fun object_set_cons(ptr: Num, car: Num, cdr: Num) {
+pub fun object_set_cons(ptr: Num, car: Num, cdr: Num): Null {
     memory_put_cons(the_memory, ptr, car, cdr)
 }
 
-pub fun cons_set_car(ptr: Num, car: Num) {
-    let cdr = memory_get_cons_cdr(ptr)
+pub fun cons_set_car(ptr: Num, car: Num): Null {
+    let cdr = memory_get_cons_cdr(the_memory, ptr)
     memory_put_cons(the_memory, ptr, car, cdr)
 }
 
-pub fun cons_set_cdr(ptr: Num, cdr: Num) {
-    let car = memory_get_cons_car(ptr)
+pub fun cons_set_cdr(ptr: Num, cdr: Num): Null {
+    let car = memory_get_cons_car(the_memory, ptr)
     memory_put_cons(the_memory, ptr, car, cdr)
 }
 
@@ -146,72 +147,110 @@ pub fun garbage_collect(addrs: [Num]): Null {
 pub fun object_eqv(ptr1: Num, ptr2: Num): Bool {
     let tag1 = tag_of(ptr1)
     let tag2 = tag_of(ptr2)
-    if tag1 == tag_num() {
-        return tag2 == tag_num() and num_value(ptr1) == num_value(ptr2)
-    } else if tag1 == tag_text() {
-        return tag2 == tag_text() and text_value(ptr1) == text_value(ptr2)
-    } else if tag1 == tag_t() {
-        return tag2 == tag_t()
-    } else if tag1 == tag_nil() {
-        return tag2 == tag_nil()
-    } else if tag1 == tag_cons() {
-        return tag1 == tag2
+    if {
+        tag1 == tag_num() {
+            return tag2 == tag_num() and num_value(ptr1) == num_value(ptr2)
+        }
+        tag1 == tag_text() {
+            return tag2 == tag_text() and text_value(ptr1) == text_value(ptr2)
+        }
+        tag1 == tag_t() {
+            return tag2 == tag_t()
+        }
+        tag1 == tag_nil() {
+            return tag2 == tag_nil()
+        }
+        tag1 == tag_cons() {
+            return tag1 == tag2
+        }
     }
 }
 
 pub fun object_equal(ptr1: Num, ptr2: Num): Bool {
     let tag1 = tag_of(ptr1)
     let tag2 = tag_of(ptr2)
-    if tag1 == tag_num() {
-        return tag2 == tag_num() and num_value(ptr1) == num_value(ptr2)
-    } else if tag1 == tag_text() {
-        return tag2 == tag_text() and text_value(ptr1) == text_value(ptr2)
-    } else if tag1 == tag_t() {
-        return tag2 == tag_t()
-    } else if tag1 == tag_nil() {
-        return tag2 == tag_nil()
-    } else if tag1 == tag_cons() {
-        if tag2 != tag_cons() {
-            return false
+    if {
+        tag1 == tag_num() {
+            return tag2 == tag_num() and num_value(ptr1) == num_value(ptr2)
         }
-        let car1 = cons_car(ptr1)
-        let car2 = cons_car(ptr2)
-        if not object_equal(car1, car2) {
-            return false
+        tag1 == tag_text() {
+            return tag2 == tag_text() and text_value(ptr1) == text_value(ptr2)
         }
-        let cdr1 = cons_cdr(ptr1)
-        let cdr2 = cons_cdr(ptr2)
-        if not object_equal(cdr1, cdr2) {
-            return false
+        tag1 == tag_t() {
+            return tag2 == tag_t()
         }
-        return true
+        tag1 == tag_nil() {
+            return tag2 == tag_nil()
+        }
+        tag1 == tag_cons() {
+            if tag2 != tag_cons() {
+                return false
+            }
+            let car1 = cons_car(ptr1)
+            let car2 = cons_car(ptr2)
+            if not object_equal(car1, car2) {
+                return false
+            }
+            let cdr1 = cons_cdr(ptr1)
+            let cdr2 = cons_cdr(ptr2)
+            if not object_equal(cdr1, cdr2) {
+                return false
+            }
+            return true
+        }
     }
 }
 
 pub fun object_to_string(ptr: Num): Text {
-    let tag = tag_of(ptr)
+    let close_paren = -1
+    let str = ""
+    let stack_base = callstack_current_sp()
+    callstack_push(ptr)
 
-    if tag == tag_unused() {
-        return "<unused: {ptr}>"
+    let first = true
+    loop {
+        if callstack_current_sp() == stack_base {
+            break
+        }
+
+        ptr = callstack_pop()
+        if ptr == close_paren {
+            str += ")"
+            continue
+        }
+        
+        if first {
+            first = false
+        } else {
+            str += " "
+        }
+
+        let tag = tag_of(ptr)
+        if {
+            tag == tag_unused() {
+                str += "<unused: {ptr}>"
+            }
+            tag == tag_num() {
+                str += "{num_value(ptr)}"
+            }
+            tag == tag_text() {
+                str += "'{text_value(ptr)}'"
+            }
+            tag == tag_t() {
+                str += "t"
+            }
+            tag == tag_nil() {
+                str += "nil"
+            }
+            tag == tag_cons() {
+                str += "(cons"
+                callstack_push(close_paren)
+                callstack_push(cons_cdr(ptr))
+                callstack_push(cons_car(ptr))
+            }
+            else {
+                str += "<invalid: {ptr} tag={tag}>"
+            }
+        }
     }
-    if tag == tag_num() {
-        return "{ptr}"
-    }
-    if tag == tag_text() {
-        return "'{ptr}'"
-    }
-    if tag == tag_t() {
-        return "t"
-    }
-    if tag == tag_nil() {
-        return "nil"
-    }
-    if tag == tag_cons() {
-        let car = cons_car(ptr)
-        let cdr = cons_cdr(ptr)
-        let car_str = object_to_string(car)
-        let cdr_str = object_to_string(cdr)
-        return "(cons {car} {cdr})"
-    }
-    return "<invalid: {ptr} tag={tag}>"
 }

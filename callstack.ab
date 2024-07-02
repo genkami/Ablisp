@@ -1,0 +1,25 @@
+// Module callstack provides stacks for heap objects to implement recursive functions.
+// The stack itself is not allocated in the heap.
+
+import {len} from "std"
+
+let _stack = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+let _stack_next = 0
+
+pub fun callstack_push(elem: Num): Null {
+    if len(_stack) <= _stack_next {
+        _stack += [elem]
+    } else {
+        _stack[_stack_next] = elem
+    }
+    _stack_next += 1
+}
+
+pub fun callstack_pop(): Num {
+    _stack_next -= 1
+    return _stack[_stack_next]
+}
+
+pub fun callstack_current_sp(): Num {
+    return _stack_next
+}

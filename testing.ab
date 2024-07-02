@@ -12,6 +12,7 @@ pub fun test_section(section: Text): Null {
 }
 
 pub fun test_expectation(expectation: Text): Null {
+    echo "{_test_section}: {_test_expectation}"
     _test_expectation = expectation
 }
 
@@ -78,13 +79,13 @@ pub fun assert_equal_text_array(lhs: [Text], rhs: [Text]): Null {
 pub fun assert_object_eqv(lhs: Num, rhs: Num): Null {
     let lhs_text = object_to_string(lhs)
     let rhs_text = object_to_string(rhs)
-    assert(object_eqv(lhs, rhs), "value mismatch:\nlhs={lhs_text}\nrhs={rhs_text}")
+    assert(object_eqv(lhs, rhs), "value mismatch:\nlhs={lhs_text}\nrhs={rhs_text}")?
 }
 
 pub fun assert_object_equal(lhs: Num, rhs: Num): Null {
     let lhs_text = object_to_string(lhs)
     let rhs_text = object_to_string(rhs)
-    assert(object_equal(lhs, rhs), "value mismatch:\nlhs={lhs_text}\nrhs={rhs_text}")
+    assert(object_equal(lhs, rhs), "value mismatch:\nlhs={lhs_text}\nrhs={rhs_text}")?
 }
 
 pub fun assert_ok(result: [Text]): Null {
