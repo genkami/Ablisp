@@ -9,7 +9,8 @@ import * from "./callstack.ab"
 //
 // Object types:
 // - [0, _, _]: unused (and will be garbage collected)
-// - [1, v, _]: number with value `v as Num` // - [2, v, _]: text with value `v`
+// - [1, v, _]: number with value `v as Num`
+// - [2, v, _]: text with value `v`
 // - [3, _, _]: `t` (or `#t` in other Lisp dialects)
 // - [4, _, _]: `nil`
 // - [5, a, b]: a cons-cell whose car is `a` and cdr is `b`,
@@ -19,6 +20,7 @@ let the_memory = [Text]
 
 // Pointer to a resource that was allcoated the last time by new_XXX.
 // There's no guarantee that, for example, last_allocated+1 is vacant.
+// There's also no guarantee that the value at last_allocated is not garbage collected.
 let last_allocated = 0
 
 // Since we don't have `pub const` or `pub let`,

@@ -1,53 +1,90 @@
+import {len} from "std"
 import * from "./object.ab"
 import * from "./testing.ab"
+
+fun pointers_are_unique(ptrs: [Num]): Bool {
+    let length = len(ptrs)
+    let i = 0
+    loop {
+        if length <= i {
+            break
+        }
+        let j = i + 1
+        loop {
+            if length <= j {
+                break
+            }
+            if ptrs[i] == ptrs[j] {
+                return false
+            }
+            j += 1
+        }
+        i += 1
+    }
+    return true
+}
 
 fun test_object_new() {
     test_section("test_object_new")
 
     debug_clear_all_objects()
+    let ptrs = [Num]
 
     test_expectation("new_num allocates a new num")
     let ptr0 = new_num(123)
-    assert_equal_num(ptr0, 0)?
+    ptrs += [ptr0]
+    assert(pointers_are_unique(ptrs), "object unexpectedly reused: {ptrs}")?
     assert_equal_num(tag_of(ptr0), tag_num())?
     assert_equal_num(num_value(ptr0), 123)?
 
     test_expectation("new_text allocates a new text")
     let ptr1 = new_text("hoge")
-    assert_equal_num(ptr1, 1)?
+    ptrs += [ptr1]
+    assert(pointers_are_unique(ptrs), "object unexpectedly reused: {ptrs}")?
     assert_equal_num(tag_of(ptr1), tag_text())?
     assert_equal_text(text_value(ptr1), "hoge")?
 
     test_expectation("new_t allocates a new `t`")
     let ptr2 = new_t()
-    assert_equal_num(ptr2, 2)?
+    ptrs += [ptr2]
+    assert(pointers_are_unique(ptrs), "object unexpectedly reused: {ptrs}")?
     assert_equal_num(tag_of(ptr2), tag_t())?
 
     test_expectation("new_nil allocates a new `nil`")
     let ptr3 = new_nil()
-    assert_equal_num(ptr3, 3)?
+    ptrs += [ptr3]
+    assert(pointers_are_unique(ptrs), "object unexpectedly reused: {ptrs}")?
     assert_equal_num(tag_of(ptr3), tag_nil())?
 
     test_expectation("new_cons allocates a new cons-cell")
-    let ptr4 = new_cons(0, 1)
-    assert_equal_num(ptr4, 4)?
+    let ptr4 = new_cons(ptr0, ptr1)
+    ptrs += [ptr4]
+    assert(pointers_are_unique(ptrs), "object unexpectedly reused: {ptrs}")?
     assert_equal_num(tag_of(ptr4), tag_cons())?
-    assert_equal_num(cons_car(ptr4), 0)?
-    assert_equal_num(cons_cdr(ptr4), 1)?
+    assert_equal_num(cons_car(ptr4), ptr0)?
+    assert_equal_num(cons_cdr(ptr4), ptr1)?
 
-    // 3 is nil
-    // 4 is a cons-cell which references 0 and 1
-    // So 2 is the only object which will be garbage collected
-    let refptrs = [4, 3]
+    test_expectation("new_XXX reuses garbage collected objects, but does not reuse the ones which are referenced")
+
+    // ptr3 is nil
+    // ptr4 is a cons-cell which references ptr0 and ptr1
+    // So ptr2 is the only object which will be garbage collected
+    let refptrs = [ptr4, ptr3]
     garbage_collect(refptrs)
+    ptrs = [ptr0, ptr1, ptr3, ptr4]
 
-    test_expectation("new_XXX reuses garbage collected objects")
-    let ptr5 = new_num(999)
-    assert_equal_num(ptr5, 2)?
+    let ptr2_reused = false
+    loop i in 0..20 {
+        // loop random times to see that ptr2 is reused
+        let ptr5 = new_num(999)
+        ptrs += [ptr5]
+        assert(pointers_are_unique(ptrs), "object unexpectedly reused: {ptrs}")?
+        if ptr5 == ptr2 {
+            ptr2_reused = true
+        }
+    }
 
-    test_expectation("new_XXX does not reuse reachable objects")
-    let ptr6 = new_num(888)
-    assert_equal_num(ptr6, 5)?
+    assert(ptr2_reused, "ptr2 not reused")?
 }
 
 pub fun test_object() {
