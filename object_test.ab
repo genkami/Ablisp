@@ -4,7 +4,7 @@ import * from "./testing.ab"
 fun test_object_new() {
     test_section("test_object_new")
 
-    debug_clear()
+    debug_clear_all_objects()
 
     test_expectation("new_num allocates a new num")
     let ptr0 = new_num(123)

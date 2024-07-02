@@ -47,7 +47,7 @@ fun memory_get_max_objects(): Num {
     return (length - m) / 3
 }
 
-pub fun debug_clear(): Null {
+pub fun debug_clear_all_objects(): Null {
     the_memory = memory_new(0)
 }
 
