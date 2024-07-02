@@ -6,6 +6,7 @@ import * from "./testing.ab"
 fun test_env_lookup() {
     test_section("test_env_lookup")
 
+    debug_clear_all_objects()
     let env = new_env()
 
     test_expectation("env_lookup on an empty env should return undefined_variable")
@@ -34,6 +35,7 @@ fun test_env_lookup() {
 fun test_env_set() {
     test_section("test_env_set")
 
+    debug_clear_all_objects()
     let env = new_env()
     env = env_define(env, new_text("foo"), new_num(111))
     env = env_define(env, new_text("bar"), new_num(222))
