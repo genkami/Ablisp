@@ -1,4 +1,3 @@
-import * from "./memory.ab"
 import * from "./object.ab"
 import * from "./testing.ab"
 

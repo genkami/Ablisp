@@ -1,9 +1,51 @@
 // Module object manages Ablisp virtual memory and every Ablisp object.
 import {len} from "std"
-import * from "./memory.ab"
 import * from "./callstack.ab"
 
+// Memory holds every object in Ablisp.
+// Each of Ablisp objects is represented as a sequence of three elements in this array.
+// Every object starts with an index `3*k` (where k is int). The first element is a type tag
+// and the value of remaining two elements depend on the value of the object's type tag.
+//
+// Object types:
+// - [0, _, _]: unused (and will be garbage collected)
+// - [1, v, _]: number with value `v as Num` // - [2, v, _]: text with value `v`
+// - [3, _, _]: `t` (or `#t` in other Lisp dialects)
+// - [4, _, _]: `nil`
+// - [5, a, b]: a cons-cell whose car is `a` and cdr is `b`,
+//              where `a` and `b` are object indexes.
+//              An object with index `k` is stored in memory[3*k], memory[3*k+1], and memory[3*k+2].
 let the_memory = [Text]
+
+// Since we don't have `pub const` or `pub let`,
+// we have to define constants as functions.
+pub fun tag_unused(): Num { return 0 }
+pub fun tag_num(): Num    { return 1 }
+pub fun tag_text(): Num   { return 2 }
+pub fun tag_t(): Num      { return 3 }
+pub fun tag_nil(): Num    { return 4 }
+pub fun tag_cons(): Num   { return 5 }
+
+fun memory_new(nobjs: Num): [Text] {
+    let mem = [Text]
+    // NOTE: don't use `loop i in 0..X` since it produces `seq 0 -1` when `X == 0`
+    let i = 0
+    let size = 3 * nobjs
+    loop i in 0..size {
+        if size <= i {
+            break
+        }
+        mem += [tag_unused() as Text]
+        i += 1
+    }
+    return mem
+}
+
+fun memory_get_max_objects(): Num {
+    let length = len(the_memory)
+    let m = length % 3
+    return (length - m) / 3
+}
 
 pub fun debug_clear(): Null {
     the_memory = memory_new(0)
@@ -13,55 +55,15 @@ pub fun debug_dump_current_memory(): [Text] {
     return the_memory
 }
 
-fun find_next_place(): Num {
-    let max_objs = memory_get_max_objects(the_memory)
-    let i = 0
-    loop {
-        if max_objs <= i {
-            break
-        }
-        let tag = memory_get_tag(the_memory, i)
-        if tag == tag_unused() {
-            return i
-        }
-        i += 1
-    }
-    the_memory = memory_grow(the_memory)
-    return max_objs
+fun put_object(i: Num, tag: Num, val1: Text, val2: Text): Null {
+    the_memory[3 * i] = tag as Text
+    the_memory[3 * i + 1] = val1
+    the_memory[3 * i + 2] = val2
 }
 
-pub fun new_num(val: Num): Num {
-    let i = find_next_place()
-    the_memory = memory_put_num(the_memory, i, val)
-    return i
-}
-
-pub fun new_text(val: Text): Num {
-    let i = find_next_place()
-    the_memory = memory_put_text(the_memory, i, val)
-    return i
-}
-
-pub fun new_t(): Num {
-    let i = find_next_place()
-    the_memory = memory_put_t(the_memory, i)
-    return i
-}
-
-pub fun new_nil(): Num {
-    let i = find_next_place()
-    the_memory = memory_put_nil(the_memory, i)
-    return i
-}
-
-pub fun new_cons(car: Num, cdr: Num): Num {
-    let i = find_next_place()
-    the_memory = memory_put_cons(the_memory, i, car, cdr)
-    return i
-}
-
+#[allow_absurd_cast]
 pub fun tag_of(ptr: Num): Num {
-    return memory_get_tag(the_memory, ptr)
+    return the_memory[3 * ptr] as Num
 }
 
 pub fun object_is_num(ptr: Num): Bool {
@@ -84,64 +86,122 @@ pub fun object_is_cons(ptr: Num): Bool {
     return tag_of(ptr) == tag_cons()
 }
 
+#[allow_absurd_cast]
 pub fun num_value(ptr: Num): Num {
-    return memory_get_num(the_memory, ptr)
+    return the_memory[3 * ptr + 1] as Num
 }
 
 pub fun text_value(ptr: Num): Text {
-    return memory_get_text(the_memory, ptr)
+    return the_memory[3 * ptr + 1]
 }
 
+#[allow_absurd_cast]
 pub fun cons_car(ptr: Num): Num {
-    return memory_get_cons_car(the_memory, ptr)
+    return the_memory[3 * ptr + 1] as Num
 }
 
+#[allow_absurd_cast]
 pub fun cons_cdr(ptr: Num): Num {
-    return memory_get_cons_cdr(the_memory, ptr)
+    return the_memory[3 * ptr + 2] as Num
 }
 
 pub fun object_set_num(ptr: Num, value: Num): Null {
-    memory_put_num(the_memory, ptr, value)
+    put_object(ptr, tag_num(), value as Text, "")
 }
 
 pub fun object_set_text(ptr: Num, value: Text): Null {
-    memory_put_text(the_memory, ptr, value)
+    put_object(ptr, tag_text(), value, "")
 }
 
 pub fun object_set_t(ptr: Num): Null {
-    memory_put_t(the_memory, ptr)
+    put_object(ptr, tag_t(), "", "")
 }
 
 pub fun object_set_nil(ptr: Num): Null {
-    memory_put_nil(the_memory, ptr)
+    put_object(ptr, tag_nil(), "", "")
 }
 
 pub fun object_set_cons(ptr: Num, car: Num, cdr: Num): Null {
-    memory_put_cons(the_memory, ptr, car, cdr)
+    put_object(ptr, tag_cons(), car as Text, cdr as Text)
 }
 
 pub fun cons_set_car(ptr: Num, car: Num): Null {
-    let cdr = memory_get_cons_cdr(the_memory, ptr)
-    memory_put_cons(the_memory, ptr, car, cdr)
+    let cdr = cons_cdr(ptr)
+    object_set_cons(ptr, car, cdr)
 }
 
 pub fun cons_set_cdr(ptr: Num, cdr: Num): Null {
-    let car = memory_get_cons_car(the_memory, ptr)
-    memory_put_cons(the_memory, ptr, car, cdr)
+    let car = cons_car(ptr)
+    object_set_cons(ptr, car, cdr)
 }
 
-pub fun garbage_collect(addrs: [Num]): Null {
-    let referenced_objects = init_referenced_objects(memory_get_max_objects(the_memory))
+fun object_clear(ptr: Num): Null {
+    put_object(ptr, tag_unused(), "<X>", "<X>") // random values to make it easy to debug
+}
+
+fun find_next_place(): Num {
+    let max_objs = memory_get_max_objects()
     let i = 0
     loop {
-        if len(addrs) <= i {
+        if max_objs <= i {
             break
         }
-        let ptr = addrs[i]
-        referenced_objects[ptr] = true
+        let tag = tag_of(i)
+        if tag == tag_unused() {
+            return i
+        }
         i += 1
     }
-    the_memory = memory_garbage_collect(the_memory, referenced_objects)
+    
+    // No space available; grow the memory
+    let new_nobjs = max_objs * 2
+    if new_nobjs <= 0 {
+        new_nobjs = 2 // random default value
+    }
+    let new_mem = memory_new(new_nobjs)
+    i = 0
+    let mem_len = len(the_memory)
+    loop {
+        if mem_len <= i {
+            break
+        }
+        new_mem[i] = the_memory[i]
+        i += 1
+    }
+    the_memory = new_mem
+
+    // Now max_objs is the first vacant space
+    return max_objs
+}
+
+pub fun new_num(val: Num): Num {
+    let i = find_next_place()
+    object_set_num(i, val)
+    return i
+}
+
+pub fun new_text(val: Text): Num {
+    let i = find_next_place()
+    object_set_text(i, val)
+    return i
+}
+
+pub fun new_t(): Num {
+    let i = find_next_place()
+    object_set_t(i)
+    return i
+}
+
+pub fun new_nil(): Num {
+    let i = find_next_place()
+    object_set_nil(i)
+    return i
+}
+
+pub fun new_cons(car: Num, cdr: Num): Num {
+    let i = find_next_place()
+    object_set_cons(i, car, cdr)
+    return i
 }
 
 pub fun object_eqv(ptr1: Num, ptr2: Num): Bool {
@@ -252,5 +312,77 @@ pub fun object_to_string(ptr: Num): Text {
                 str += "<invalid: {ptr} tag={tag}>"
             }
         }
+    }
+}
+
+pub fun init_referenced_objects(n: Num): [Bool] {
+    let objs = [Bool]
+    let i = 0
+    loop {
+        if n <= i {
+            break
+        }
+        objs += [false]
+        i += 1
+    }
+    return objs
+}
+
+// Clears every object except for the following:
+// - (a) objects in addrs
+// - (b) objects which is referenced by (a)
+// - (c) objects which is referenced by (b)
+// - ...
+pub fun garbage_collect(addrs: [Num]): Null {
+    // Here, referenced_objects[ptr] = true means that the object pointed by ptr is referenced.
+    let referenced_objects = init_referenced_objects(memory_get_max_objects())
+    let i = 0
+    loop {
+        if len(addrs) <= i {
+            break
+        }
+        let ptr = addrs[i]
+        referenced_objects[ptr] = true
+        i += 1
+    }
+
+    let max_objs = memory_get_max_objects()
+    loop {
+        let changed = false
+        i = 0
+        loop {
+            if max_objs <= i {
+                break
+            }
+            let tag = tag_of(i)
+            // NOTE: don't use continue to increment i!
+            if tag == tag_cons() and referenced_objects[i] {
+                let ptr = cons_car(i)
+                if not referenced_objects[ptr] {
+                    changed = true
+                    referenced_objects[ptr] = true
+                }
+                ptr = cons_cdr(i)
+                if not referenced_objects[ptr] {
+                    changed = true
+                    referenced_objects[ptr] = true
+                }
+            }
+            i += 1
+        }
+        if not changed {
+            break
+        }
+    }
+
+    let i = 0
+    loop {
+        if max_objs <= i {
+            break
+        }
+        if not referenced_objects[i] {
+            object_clear(i)
+        }
+        i += 1
     }
 }
