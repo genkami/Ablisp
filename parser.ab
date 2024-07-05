@@ -1,0 +1,248 @@
+// Module parser provides an S-expression parser.
+
+import {len, chars} from "std"
+import * from "./object.ab"
+import * from "./callstack.ab"
+import * from "./char.ab"
+import * from "./error.ab"
+
+let _buf = [Text]
+let _buf_len = 0
+let _next = 0
+let _line = 0
+let _column = 0
+
+// init_parser initializes the global parser.
+// We only provide a single, global parser because of some restrictions in Amber.
+pub fun init_parser(text: Text): Null {
+    _buf = chars(text)
+    _buf_len = len(_buf)
+    _next = 0
+    _line = 0
+    _column = 0
+}
+
+fun new_parse_error(reason: Text): [Text] {
+        let err = new_err(code_parse_error(), reason)
+        return err_add_trace(err, "line {_line}, column {_column}")
+}
+
+fun peek(n: Num): Text {
+    if _buf_len <= _next + n {
+        return ""
+    }
+    return _buf[_next + n]
+}
+
+fun consume_next(): Text {
+    let next_char = _buf[_next]
+    _next += 1
+    _column += 1
+    if next_char == "\n" {
+        _line += 1
+        _column = 0
+    }
+    return next_char
+}
+
+fun is_eof(): Bool {
+    return _buf_len <= _next
+}
+
+fun is_whitespace(): Bool {
+    let c = peek(0)
+    return c == " " or c == "\t" or c == "\n"
+}
+
+fun is_comment_begin(): Bool {
+    let c = peek(0)
+    return c == ";"
+}
+
+fun consume_comment(): [Text] {
+    loop {
+        if is_eof() {
+            return new_ok(0)
+        }
+        let c = consume_next()
+        if c == "\n" {
+            return new_ok(0)
+        }
+    }
+}
+
+fun is_number_begin(): Bool {
+    let c0 = peek(0)
+    if char_is_decimal_digit(c0) {
+        return true
+    }
+    if not char_is_one_of(c0, ["+", "-"]) {
+        return false
+    }
+    let c1 = peek(1)
+    return char_is_decimal_digit(c1)
+}
+
+#[allow_absurd_cast]
+fun consume_number(): [Text] {
+    let sign = 1
+    let has_explicit_sign = false
+    let value = 0
+    
+    let c = consume_next()
+    if {
+        c == "+" {
+            has_explicit_sign = true
+        }
+        c == "-" {
+            has_explicit_sign = true
+            sign = -1
+        }
+        char_is_decimal_digit(c) {
+            value = c as Num
+        }
+        else {
+            return new_parse_error("invalid number: " + c)
+        }
+    }
+    let consumed_at_least_one_char = false
+    loop {
+        if is_eof() {
+            break
+        }
+        c = peek(0)
+        if not char_is_decimal_digit(c) {
+            break
+        }
+        consume_next()
+        consumed_at_least_one_char = true
+        value *= 10
+        value += c as Num
+    }
+    if has_explicit_sign and not consumed_at_least_one_char {
+        return new_parse_error("invalid number format")
+    }
+    return new_ok(new_num(sign * value))
+}
+
+fun is_text_begin(): Bool {
+    let c = peek(0)
+    return c == "\""
+}
+
+fun consume_text(): [Text] {
+    // TODO
+    return new_ok(0)
+}
+
+fun is_symlike_begin(): Bool {
+    // TODO
+    return false
+}
+
+fun consume_symlike(): [Text] {
+    // TODO
+    return new_ok(0)
+}
+
+fun is_list_begin(): Bool {
+    let c = peek(0)
+    return c == "("
+}
+
+fun is_list_end(): Bool {
+    let c = peek(0)
+    return c == ")"
+}
+
+pub fun parse_sexp(): [Text] {
+    let stack_base = callstack_current_sp()
+    let last_error = new_ok(0)
+    let list_start = -1
+    loop {
+        echo "parse_sexp: loop start"
+        if is_eof() {
+            echo "parse_sexp: eof"
+            break
+        }
+        if {
+            is_whitespace() {
+                echo "parse_sexp: whitespace"
+                consume_next()
+            }
+            is_comment_begin() {
+                echo "parse_sexp: comment"
+                let result = consume_comment()
+                if result_is_err(result) {
+                    last_error = result
+                    break
+                }
+            }
+            is_number_begin() {
+                echo "parse_sexp: number"
+                let result = consume_number()
+                if result_is_err(result) {
+                    last_error = result
+                    break
+                }
+                callstack_push(ok_val(result))
+            }
+            is_text_begin() {
+                echo "parse_sexp: text"
+                // TODO
+            }
+            is_symlike_begin() {
+                echo "parse_sexp: symlike"
+                // TODO
+            }
+            is_list_begin() {
+                echo "parse_sexp: list"
+                consume_next()
+                callstack_push(list_start)
+            }
+            is_list_end() {
+                echo "parse_sexp: list_end"
+                consume_next()
+                let list = new_nil()
+                loop {
+                    let top = callstack_pop()
+                    if top == list_start {
+                        break
+                    }
+                    list = new_cons(top, list)
+                }
+                callstack_push(list)
+            }
+            else {
+                echo "parse_sexp: else"
+                last_error = new_parse_error("unexpected character: " + peek(0))
+            }
+        }
+    }
+    echo "parse_sexp: loop end"
+    if result_is_err(last_error) {
+        // rewind stack
+        loop {
+            if callstack_current_sp() <= stack_base {
+                break
+            }
+            callstack_pop()
+        }
+        return last_error
+    }
+    if callstack_current_sp() != stack_base + 1 {
+        // rewind stack
+        loop {
+            if callstack_current_sp() <= stack_base {
+                break
+            }
+            callstack_pop()
+        }
+        return new_parse_error("unexpected EOF")
+    }
+    let last_value = callstack_pop()
+    if last_value < 0 {
+        return new_parse_error("parenthesis not closed")
+    }
+    return new_ok(last_value)
+}

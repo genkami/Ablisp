@@ -1,0 +1,18 @@
+import * from "./object.ab"
+import * from "./parser.ab"
+import * from "./testing.ab"
+
+fun test_parser_num() {
+    test_section("test_parser_num/single digit")
+    init_parser("1")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_num(1))?
+}
+
+pub fun test_parser() {
+    test_parser_num()?
+}
+
+main {
+    test_parser()?
+}

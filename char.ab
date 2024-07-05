@@ -1,0 +1,26 @@
+// Module char provides operations for characters.
+import {chars, len} from "std"
+
+pub fun char_is_one_of(c: Text, chars: [Text]): Bool {
+    let i = 0
+    let length = len(chars)
+    loop {
+        if length <= i {
+            break
+        }
+        if c == chars[i] {
+            return true
+        }
+    }
+    return false
+}
+
+pub fun char_is_alpha(c: Text): Bool {
+    let alphas = chars("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    return char_is_one_of(c, alphas)
+}
+
+pub fun char_is_decimal_digit(c: Text): Bool {
+    let digits = chars("0123456789")
+    return char_is_one_of(c, digits)
+}

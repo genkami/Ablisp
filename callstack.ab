@@ -6,6 +6,8 @@ import {len} from "std"
 let _stack = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 let _stack_next = 0
 
+// callstack_push pushes `elem` to the stack.
+// The stack only has weak references, so there's no guarantee that `elem` will not be garbage collected.
 pub fun callstack_push(elem: Num): Null {
     if len(_stack) <= _stack_next {
         _stack += [elem]
