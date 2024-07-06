@@ -12,8 +12,8 @@ pub fun test_section(section: Text): Null {
 }
 
 pub fun test_expectation(expectation: Text): Null {
-    echo "{_test_section}: {_test_expectation}"
     _test_expectation = expectation
+    echo "{_test_section}: {_test_expectation}"
 }
 
 pub fun assert(expr: Bool, msg: Text): Null {

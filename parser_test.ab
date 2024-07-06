@@ -2,15 +2,32 @@ import * from "./object.ab"
 import * from "./parser.ab"
 import * from "./testing.ab"
 
-fun test_parser_num() {
-    test_section("test_parser_num/single digit")
+fun test_parse_sexp_num() {
+    test_section("test_parse_sexp_num")
+
+    test_expectation("it should parse a single digit")
     init_parser("1")
     let val = parse_sexp()
     assert_ok_object_eqv(val, new_num(1))?
+    
+    test_expectation("it should parse a sequence of digits")
+    init_parser("3535")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_num(3535))?
+
+    test_expectation("it should parse a number with + sign")
+    init_parser("+110")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_num(110))?
+    
+    test_expectation("it should parse a number with - sign")
+    init_parser("-445")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_num(-445))?
 }
 
 pub fun test_parser() {
-    test_parser_num()?
+    test_parse_sexp_num()?
 }
 
 main {
