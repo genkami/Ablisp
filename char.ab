@@ -11,6 +11,7 @@ pub fun char_is_one_of(c: Text, chars: [Text]): Bool {
         if c == chars[i] {
             return true
         }
+        i += 1
     }
     return false
 }

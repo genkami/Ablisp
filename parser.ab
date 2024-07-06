@@ -160,18 +160,14 @@ pub fun parse_sexp(): [Text] {
     let last_error = new_ok(0)
     let list_start = -1
     loop {
-        echo "parse_sexp: loop start"
         if is_eof() {
-            echo "parse_sexp: eof"
             break
         }
         if {
             is_whitespace() {
-                echo "parse_sexp: whitespace"
                 consume_next()
             }
             is_comment_begin() {
-                echo "parse_sexp: comment"
                 let result = consume_comment()
                 if result_is_err(result) {
                     last_error = result
@@ -179,7 +175,6 @@ pub fun parse_sexp(): [Text] {
                 }
             }
             is_number_begin() {
-                echo "parse_sexp: number"
                 let result = consume_number()
                 if result_is_err(result) {
                     last_error = result
@@ -188,20 +183,16 @@ pub fun parse_sexp(): [Text] {
                 callstack_push(ok_val(result))
             }
             is_text_begin() {
-                echo "parse_sexp: text"
                 // TODO
             }
             is_symlike_begin() {
-                echo "parse_sexp: symlike"
                 // TODO
             }
             is_list_begin() {
-                echo "parse_sexp: list"
                 consume_next()
                 callstack_push(list_start)
             }
             is_list_end() {
-                echo "parse_sexp: list_end"
                 consume_next()
                 let list = new_nil()
                 loop {
@@ -214,12 +205,10 @@ pub fun parse_sexp(): [Text] {
                 callstack_push(list)
             }
             else {
-                echo "parse_sexp: else"
                 last_error = new_parse_error("unexpected character: " + peek(0))
             }
         }
     }
-    echo "parse_sexp: loop end"
     if result_is_err(last_error) {
         // rewind stack
         loop {
