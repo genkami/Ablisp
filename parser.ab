@@ -131,8 +131,44 @@ fun is_text_begin(): Bool {
 }
 
 fun consume_text(): [Text] {
-    // TODO
-    return new_ok(0)
+    let text = ""
+    let bs = backslash(1)
+    consume_next() // first double-quote
+    loop {
+        if is_eof() {
+            return new_parse_error("unexpected EOF while parsing text")
+        }
+        let c = consume_next()
+        if {
+            c == "\"" {
+                break
+            }
+            c == bs {
+                if is_eof() {
+                    return new_parse_error("unexpected EOF while parsing escape sequence")
+                }
+                c = consume_next()
+                if {
+                    c == "\"" {
+                        text += "\""
+                    }
+                    c == bs {
+                        text += bs
+                    }
+                    c == "n" {
+                        text += "\n"
+                    }
+                    else {
+                        return new_parse_error("unsupported escape sequence: " + bs + c)
+                    }
+                }
+            }
+            else {
+                text += c
+            }
+        }
+    }
+    return new_ok(new_text(text))
 }
 
 fun is_symlike_begin(): Bool {
@@ -160,14 +196,18 @@ pub fun parse_sexp(): [Text] {
     let last_error = new_ok(0)
     let list_start = -1
     loop {
+        echo "loop"
         if is_eof() {
             break
         }
+        // TODO: break after consuming a single object
         if {
             is_whitespace() {
+                echo "wspace"
                 consume_next()
             }
             is_comment_begin() {
+                echo "comment"
                 let result = consume_comment()
                 if result_is_err(result) {
                     last_error = result
@@ -175,6 +215,7 @@ pub fun parse_sexp(): [Text] {
                 }
             }
             is_number_begin() {
+                echo "num"
                 let result = consume_number()
                 if result_is_err(result) {
                     last_error = result
@@ -183,16 +224,25 @@ pub fun parse_sexp(): [Text] {
                 callstack_push(ok_val(result))
             }
             is_text_begin() {
-                // TODO
+                echo "text"
+                let result = consume_text()
+                if result_is_err(result) {
+                    last_error = result
+                    break
+                }
+                callstack_push(ok_val(result))
             }
             is_symlike_begin() {
+                echo "symlike"
                 // TODO
             }
             is_list_begin() {
+                echo "list"
                 consume_next()
                 callstack_push(list_start)
             }
             is_list_end() {
+                echo "list-end"
                 consume_next()
                 let list = new_nil()
                 loop {
@@ -205,7 +255,9 @@ pub fun parse_sexp(): [Text] {
                 callstack_push(list)
             }
             else {
+                echo "else"
                 last_error = new_parse_error("unexpected character: " + peek(0))
+                break
             }
         }
     }

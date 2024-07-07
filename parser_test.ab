@@ -1,9 +1,11 @@
+import * from "./char.ab"
 import * from "./object.ab"
 import * from "./parser.ab"
 import * from "./testing.ab"
 
 fun test_parse_sexp_num() {
     test_section("test_parse_sexp_num")
+    debug_clear_all_objects()
 
     test_expectation("it should parse a single digit")
     init_parser("1")
@@ -26,8 +28,34 @@ fun test_parse_sexp_num() {
     assert_ok_object_eqv(val, new_num(-445))?
 }
 
+fun test_parse_sexp_text() {
+    test_section("test_parse_sexp_text")
+    debug_clear_all_objects()
+
+    test_expectation("it should parse an empty text")
+    init_parser("\"\"")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_text(""))?
+
+    test_expectation("it should parse a text which consists of ASCII characters")
+    init_parser("\"abc123!@#\"")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_text("abc123!@#"))?
+
+    test_expectation("it should parse a text with escape sequence")
+    init_parser("\"abc\\ndef" + backslash(3) + "\"ghi\"")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_text("abc\ndef" + backslash(1) + "\"ghi"))?
+
+    test_expectation("it should parse a unicode text")
+    init_parser("\"こんにちは\"")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_text("こんにちは"))?
+}
+
 pub fun test_parser() {
     test_parse_sexp_num()?
+    test_parse_sexp_text()?
 }
 
 main {

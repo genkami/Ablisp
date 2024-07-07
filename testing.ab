@@ -16,10 +16,14 @@ pub fun test_expectation(expectation: Text): Null {
     echo "{_test_section}: {_test_expectation}"
 }
 
+pub fun fail_test(msg: Text): Null {
+    echo "{_test_section}: {_test_expectation}\n{msg}"
+    fail 1
+}
+
 pub fun assert(expr: Bool, msg: Text): Null {
     if not expr {
-        echo "{_test_section}: {_test_expectation}\n{msg}"
-        fail 1
+        fail_test(msg)?
     }
 }
 
@@ -89,7 +93,11 @@ pub fun assert_object_equal(lhs: Num, rhs: Num): Null {
 }
 
 pub fun assert_ok(result: [Text]): Null {
-    assert(result_is_ok(result), "value is not ok: {result}")?
+    if not result_is_ok(result) {
+        let code = err_code(result)
+        let reason = err_reason(result)
+        fail_test("expecrted ok but got: {code} ({reason})")?
+    }
 }
 
 pub fun assert_ok_val(result: [Text], val: Num): Null {
