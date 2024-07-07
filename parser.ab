@@ -171,14 +171,44 @@ fun consume_text(): [Text] {
     return new_ok(new_text(text))
 }
 
+let symlike_head_chars = chars(
+    "abcdefghijklmnopqrstuvwxyz" +
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+    "~!@$%^&*_+:.<>/?"
+)
+
+let symlike_tail_chars = symlike_head_chars + chars(
+    "0123456789"
+)
+
 fun is_symlike_begin(): Bool {
-    // TODO
-    return false
+    return char_is_one_of(peek(0), symlike_head_chars)
 }
 
 fun consume_symlike(): [Text] {
-    // TODO
-    return new_ok(0)
+    let name = consume_next()
+    loop {
+        if is_eof() {
+            break
+        }
+        let c = peek(0)
+        if not char_is_one_of(c, symlike_tail_chars) {
+            break
+        }
+        consume_next()
+        name += c
+    }
+    if {
+        name == "t" {
+            return new_ok(new_t())
+        }
+        name == "nil" {
+            return new_ok(new_nil())
+        }
+        else {
+            return new_parse_error("symbol not supported")
+        }
+    }
 }
 
 fun is_list_begin(): Bool {
@@ -234,7 +264,12 @@ pub fun parse_sexp(): [Text] {
             }
             is_symlike_begin() {
                 echo "symlike"
-                // TODO
+                let result = consume_symlike()
+                if result_is_err(result) {
+                    last_error = result
+                    break
+                }
+                callstack_push(ok_val(result))
             }
             is_list_begin() {
                 echo "list"

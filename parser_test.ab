@@ -1,4 +1,5 @@
 import * from "./char.ab"
+import * from "./error.ab"
 import * from "./object.ab"
 import * from "./parser.ab"
 import * from "./testing.ab"
@@ -26,6 +27,11 @@ fun test_parse_sexp_num() {
     init_parser("-445")
     let val = parse_sexp()
     assert_ok_object_eqv(val, new_num(-445))?
+
+    test_expectation("it ignores spaces before a number")
+    init_parser("   \t\n  810")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_num(810))?
 }
 
 fun test_parse_sexp_text() {
@@ -51,11 +57,37 @@ fun test_parse_sexp_text() {
     init_parser("\"こんにちは\"")
     let val = parse_sexp()
     assert_ok_object_eqv(val, new_text("こんにちは"))?
+
+    test_expectation("it should reject an unsupported escape sequence")
+    init_parser("\"" + backslash(1) + "q\"")
+    let val = parse_sexp()
+    assert_err_code(val, code_parse_error())?
+
+    test_expectation("it should ignore spaces before a text")
+    init_parser("\n\t  \n\"foo\"")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_text("foo"))?
+}
+
+fun test_parse_sexp_symlike() {
+    test_section("test_parse_sexp_symlike")
+    debug_clear_all_objects()
+
+    test_expectation("it should parse t")
+    init_parser("t")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_t())?
+
+    test_expectation("it should parse nil")
+    init_parser("nil")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_nil())?
 }
 
 pub fun test_parser() {
     test_parse_sexp_num()?
     test_parse_sexp_text()?
+    test_parse_sexp_symlike()?
 }
 
 main {

@@ -4,6 +4,7 @@ import {chars, len, trim_right} from "std"
 // backslash returns a sequence of n backslashes.
 // Because Amber does not currently handle escape sequences properly,
 // We sometimes have to use this function instead of simply writing \\.
+// TODO: submit an issue and put a link to it here.
 pub fun backslash(n: Num): Text {
     let text = ""
     let c = trim_right("\\ ")
