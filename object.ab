@@ -256,7 +256,7 @@ pub fun object_eqv(ptr1: Num, ptr2: Num): Bool {
             return tag2 == tag_nil()
         }
         tag1 == tag_cons() {
-            return tag1 == tag2
+            return ptr1 == ptr2
         }
         else {
             echo "BUG: object_eqv: unexpected object tag: {tag1}"
@@ -265,46 +265,88 @@ pub fun object_eqv(ptr1: Num, ptr2: Num): Bool {
     }
 }
 
-pub fun object_equal(ptr1: Num, ptr2: Num): Bool {
-    let tag1 = tag_of(ptr1)
-    let tag2 = tag_of(ptr2)
-    if {
-        tag1 == tag_num() {
-            return tag2 == tag_num() and num_value(ptr1) == num_value(ptr2)
-        }
-        tag1 == tag_text() {
-            return tag2 == tag_text() and text_value(ptr1) == text_value(ptr2)
-        }
-        tag1 == tag_symbol() {
-            return tag2 == tag_symbol() and symbol_name(ptr1) == symbol_name(ptr2)
-        }
-        tag1 == tag_t() {
-            return tag2 == tag_t()
-        }
-        tag1 == tag_nil() {
-            return tag2 == tag_nil()
-        }
-        tag1 == tag_cons() {
-            if tag2 != tag_cons() {
-                return false
-            }
-            let car1 = cons_car(ptr1)
-            let car2 = cons_car(ptr2)
-            if not object_equal(car1, car2) {
-                return false
-            }
-            let cdr1 = cons_cdr(ptr1)
-            let cdr2 = cons_cdr(ptr2)
-            if not object_equal(cdr1, cdr2) {
-                return false
-            }
+pub fun object_equal(obj1: Num, obj2: Num): Bool {
+    let stack_base = callstack_current_sp()
+    callstack_push(obj1)
+    callstack_push(obj2)
+    loop {
+        if stack_base == callstack_current_sp() {
             return true
         }
-        else {
-            echo "BUG: object_eqv: unexpected object tag: {tag1}"
-            return false
+        let obj1 = callstack_pop()
+        let obj2 = callstack_pop()
+        let tag1 = tag_of(obj1)
+        let tag2 = tag_of(obj2)
+        if tag1 == tag_num() {
+            if tag2 != tag_num() {
+                break
+            }
+            let v1 = num_value(obj1)
+            let v2 = num_value(obj2)
+            if v1 != v2 {
+                break
+            }
+            continue
         }
+        if tag1 == tag_text() {
+            if tag2 != tag_text() {
+                break
+            }
+            let v1 = text_value(obj1)
+            let v2 = text_value(obj2)
+            if v1 != v2 {
+                break
+            }
+            continue
+        }
+        if tag1 == tag_symbol() {
+            if tag2 != tag_symbol() {
+                break
+            }
+            let v1 = symbol_name(obj1)
+            let v2 = symbol_name(obj2)
+            if v1 != v2 {
+                break
+            }
+            continue
+        }
+        if tag1 == tag_t() {
+            if tag2 != tag_t() {
+                break
+            }
+            continue
+        }
+        if tag1 == tag_nil() {
+            if tag2 != tag_nil() {
+                break
+            }
+            continue
+        }
+        if tag1 == tag_cons() {
+            if tag2 != tag_cons() {
+                break
+            }
+            let car1 = cons_car(obj1)
+            let cdr1 = cons_cdr(obj1)
+            let car2 = cons_car(obj2)
+            let cdr2 = cons_cdr(obj2)
+            callstack_push(car1)
+            callstack_push(car2)
+            callstack_push(cdr1)
+            callstack_push(cdr2)
+            continue
+        }
+        echo "BUG: object_equal: unexpected object tag: {tag1}"
+        break
     }
+    // rewind stack
+    loop {
+        if callstack_current_sp() <= stack_base {
+            break
+        }
+        callstack_pop()
+    }
+    return false
 }
 
 pub fun object_to_string(ptr: Num): Text {

@@ -118,7 +118,7 @@ pub fun test_parse_sexp_list() {
     let val = parse_sexp()
     let want = new_nil()
     want = new_cons(new_num(1), want)
-    assert_ok_object_eqv(val, want)?
+    assert_ok_object_equal(val, want)?
 
     test_expectation("it should parse a list of multiple elements")
     init_parser("(1 \"b\" t nil foo)")
@@ -129,7 +129,7 @@ pub fun test_parse_sexp_list() {
     want = new_cons(new_t(), want)
     want = new_cons(new_text("b"), want)
     want = new_cons(new_num(1), want)
-    assert_ok_object_eqv(val, want)?
+    assert_ok_object_equal(val, want)?
 
     test_expectation("it should parse a nested list")
     init_parser("(1 (2 3) (\"4\" \"5\" \"6\") (t nil) (v7 (v8 v9)))")
@@ -155,7 +155,7 @@ pub fun test_parse_sexp_list() {
     elem = new_cons(new_num(2), elem)
     want = new_cons(elem, want)
     want = new_cons(new_num(1), want)
-    assert_ok_object_eqv(val, want)?
+    assert_ok_object_equal(val, want)?
 }
 
 pub fun test_parser() {
