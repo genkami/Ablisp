@@ -64,27 +64,39 @@ fun test_object_new() {
     assert_equal_num(cons_car(ptr4), ptr0)?
     assert_equal_num(cons_cdr(ptr4), ptr1)?
 
+    test_expectation("new_symbol allocates a new symbol")
+    let ptr5 = new_symbol("foo")
+    ptrs += [ptr5]
+    assert(pointers_are_unique(ptrs), "object unexpectedly reused: {ptrs}")?
+    assert_equal_num(tag_of(ptr5), tag_symbol())?
+    assert_equal_text(symbol_name(ptr5), "foo")?
+
     test_expectation("new_XXX reuses garbage collected objects, but does not reuse the ones which are referenced")
 
     // ptr3 is nil
     // ptr4 is a cons-cell which references ptr0 and ptr1
-    // So ptr2 is the only object which will be garbage collected
+    // So ptr2 and ptr5 are the objects which will be garbage collected
     let refptrs = [ptr4, ptr3]
     garbage_collect(refptrs)
     ptrs = [ptr0, ptr1, ptr3, ptr4]
 
     let ptr2_reused = false
+    let ptr5_reused = false
     loop i in 0..20 {
-        // loop random times to see that ptr2 is reused
-        let ptr5 = new_num(999)
-        ptrs += [ptr5]
+        // loop random times to see that objects are reused
+        let ptr = new_num(999)
+        ptrs += [ptr]
         assert(pointers_are_unique(ptrs), "object unexpectedly reused: {ptrs}")?
-        if ptr5 == ptr2 {
+        if ptr == ptr2 {
             ptr2_reused = true
+        }
+        if ptr == ptr5 {
+            ptr5_reused = true
         }
     }
 
     assert(ptr2_reused, "ptr2 not reused")?
+    assert(ptr5_reused, "ptr5 not reused")?
 }
 
 pub fun test_object() {

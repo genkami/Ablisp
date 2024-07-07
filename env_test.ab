@@ -10,25 +10,25 @@ fun test_env_lookup() {
     let env = new_env()
 
     test_expectation("env_lookup on an empty env should return undefined_variable")
-    let result = env_lookup(env, new_text("foo"))
+    let result = env_lookup(env, new_symbol("foo"))
     assert_err_code(result, code_undefined_variable())?
 
     test_expectation("if a variable is defined, env_lookup should return its value")
-    env = env_define(env, new_text("foo"), new_num(123))
-    result = env_lookup(env, new_text("foo"))
+    env = env_define(env, new_symbol("foo"), new_num(123))
+    result = env_lookup(env, new_symbol("foo"))
     assert_ok_object_eqv(result, new_num(123))?
 
     test_expectation("adding a new variable definition does not affect existing definitions")
-    env = env_define(env, new_text("bar"), new_num(456))
-    result = env_lookup(env, new_text("foo"))
+    env = env_define(env, new_symbol("bar"), new_num(456))
+    result = env_lookup(env, new_symbol("foo"))
     assert_ok_object_eqv(result, new_num(123))?
     
-    result = env_lookup(env, new_text("bar"))
+    result = env_lookup(env, new_symbol("bar"))
     assert_ok_object_eqv(result, new_num(456))?
 
     test_expectation("a variable in an inner scope can have the same name as the one in an outer scope")
-    env = env_define(env, new_text("foo"), new_num(999))
-    result = env_lookup(env, new_text("foo"))
+    env = env_define(env, new_symbol("foo"), new_num(999))
+    result = env_lookup(env, new_symbol("foo"))
     assert_ok_object_eqv(result, new_num(999))?
 }
 
@@ -37,32 +37,32 @@ fun test_env_set() {
 
     debug_clear_all_objects()
     let env = new_env()
-    env = env_define(env, new_text("foo"), new_num(111))
-    env = env_define(env, new_text("bar"), new_num(222))
+    env = env_define(env, new_symbol("foo"), new_num(111))
+    env = env_define(env, new_symbol("bar"), new_num(222))
 
     test_expectation("in an inner scope, env_lookup should return the variable in the innermost scope")
-    let child_env = env_define(env, new_text("foo"), new_num(333))
-    let result = env_lookup(child_env, new_text("foo"))
+    let child_env = env_define(env, new_symbol("foo"), new_num(333))
+    let result = env_lookup(child_env, new_symbol("foo"))
     assert_ok_object_eqv(result, new_num(333))?
 
     test_expectation("env_set should modify the variable in the innermost scope")
-    result = env_set(child_env, new_text("foo"), new_num(444))
+    result = env_set(child_env, new_symbol("foo"), new_num(444))
     assert_ok(result)?
-    result = env_lookup(child_env, new_text("foo"))
+    result = env_lookup(child_env, new_symbol("foo"))
     assert_ok_object_eqv(result, new_num(444))?
 
     test_expectation("env_set can modify the variable in an outer scope if its name doesn't conflict with a variable in an inner scope")
-    result = env_set(child_env, new_text("bar"), new_num(555))
+    result = env_set(child_env, new_symbol("bar"), new_num(555))
     assert_ok(result)?
-    result = env_lookup(child_env, new_text("bar"))
+    result = env_lookup(child_env, new_symbol("bar"))
     assert_ok_object_eqv(result, new_num(555))?
 
     test_expectation("env_set affects the argument's outer scope")
-    result = env_lookup(env, new_text("bar"))
+    result = env_lookup(env, new_symbol("bar"))
     assert_ok_object_eqv(result, new_num(555))?
 
     test_expectation("env_set only changes a variable in an inner scope when there is a variable with the same name in an outer scope") 
-    result = env_lookup(env, new_text("foo"))
+    result = env_lookup(env, new_symbol("foo"))
     assert_ok_object_eqv(result, new_num(111))?
 }
 

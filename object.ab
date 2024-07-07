@@ -11,9 +11,10 @@ import * from "./callstack.ab"
 // - [0, _, _]: unused (and will be garbage collected)
 // - [1, v, _]: number with value `v as Num`
 // - [2, v, _]: text with value `v`
-// - [3, _, _]: `t` (or `#t` in other Lisp dialects)
-// - [4, _, _]: `nil`
-// - [5, a, b]: a cons-cell whose car is `a` and cdr is `b`,
+// - [3, v, _]: symbol with name `v`
+// - [4, _, _]: `t` (or `#t` in other Lisp dialects)
+// - [5, _, _]: `nil`
+// - [6, a, b]: a cons-cell whose car is `a` and cdr is `b`,
 //              where `a` and `b` are object indexes.
 //              An object with index `k` is stored in memory[3*k], memory[3*k+1], and memory[3*k+2].
 let the_memory = [Text]
@@ -28,9 +29,10 @@ let last_allocated = 0
 pub fun tag_unused(): Num { return 0 }
 pub fun tag_num(): Num    { return 1 }
 pub fun tag_text(): Num   { return 2 }
-pub fun tag_t(): Num      { return 3 }
-pub fun tag_nil(): Num    { return 4 }
-pub fun tag_cons(): Num   { return 5 }
+pub fun tag_symbol(): Num { return 3 }
+pub fun tag_t(): Num      { return 4 }
+pub fun tag_nil(): Num    { return 5 }
+pub fun tag_cons(): Num   { return 6 }
 
 fun memory_new(nobjs: Num): [Text] {
     let mem = [Text]
@@ -81,6 +83,10 @@ pub fun object_is_text(ptr: Num): Bool {
     return tag_of(ptr) == tag_text()
 }
 
+pub fun object_is_symbol(ptr: Num): Bool {
+    return tag_of(ptr) == tag_symbol()
+}
+
 pub fun object_is_t(ptr: Num): Bool {
     return tag_of(ptr) == tag_t()
 }
@@ -102,6 +108,10 @@ pub fun text_value(ptr: Num): Text {
     return the_memory[3 * ptr + 1]
 }
 
+pub fun symbol_name(ptr: Num): Text {
+    return the_memory[3 * ptr + 1]
+}
+
 #[allow_absurd_cast]
 pub fun cons_car(ptr: Num): Num {
     return the_memory[3 * ptr + 1] as Num
@@ -118,6 +128,10 @@ pub fun object_set_num(ptr: Num, value: Num): Null {
 
 pub fun object_set_text(ptr: Num, value: Text): Null {
     put_object(ptr, tag_text(), value, "")
+}
+
+pub fun object_set_symbol(ptr: Num, name: Text): Null {
+    put_object(ptr, tag_symbol(), name, "")
 }
 
 pub fun object_set_t(ptr: Num): Null {
@@ -198,6 +212,12 @@ pub fun new_text(val: Text): Num {
     return i
 }
 
+pub fun new_symbol(name: Text): Num {
+    let i = find_next_place()
+    object_set_symbol(i, name)
+    return i
+}
+
 pub fun new_t(): Num {
     let i = find_next_place()
     object_set_t(i)
@@ -226,6 +246,9 @@ pub fun object_eqv(ptr1: Num, ptr2: Num): Bool {
         tag1 == tag_text() {
             return tag2 == tag_text() and text_value(ptr1) == text_value(ptr2)
         }
+        tag1 == tag_symbol() {
+            return tag2 == tag_symbol() and symbol_name(ptr1) == symbol_name(ptr2)
+        }
         tag1 == tag_t() {
             return tag2 == tag_t()
         }
@@ -234,6 +257,10 @@ pub fun object_eqv(ptr1: Num, ptr2: Num): Bool {
         }
         tag1 == tag_cons() {
             return tag1 == tag2
+        }
+        else {
+            echo "BUG: object_eqv: unexpected object tag: {tag1}"
+            return false
         }
     }
 }
@@ -247,6 +274,9 @@ pub fun object_equal(ptr1: Num, ptr2: Num): Bool {
         }
         tag1 == tag_text() {
             return tag2 == tag_text() and text_value(ptr1) == text_value(ptr2)
+        }
+        tag1 == tag_symbol() {
+            return tag2 == tag_symbol() and symbol_name(ptr1) == symbol_name(ptr2)
         }
         tag1 == tag_t() {
             return tag2 == tag_t()
@@ -269,6 +299,10 @@ pub fun object_equal(ptr1: Num, ptr2: Num): Bool {
                 return false
             }
             return true
+        }
+        else {
+            echo "BUG: object_eqv: unexpected object tag: {tag1}"
+            return false
         }
     }
 }
@@ -307,6 +341,9 @@ pub fun object_to_string(ptr: Num): Text {
             }
             tag == tag_text() {
                 str += "'{text_value(ptr)}'"
+            }
+            tag == tag_symbol() {
+                str += symbol_name(ptr)
             }
             tag == tag_t() {
                 str += "t"

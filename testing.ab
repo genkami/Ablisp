@@ -17,7 +17,7 @@ pub fun test_expectation(expectation: Text): Null {
 }
 
 pub fun fail_test(msg: Text): Null {
-    echo "{_test_section}: {_test_expectation}\n{msg}"
+    echo "[FAILED] {_test_section}: {_test_expectation}\n{msg}"
     fail 1
 }
 
