@@ -398,6 +398,7 @@ pub fun object_to_string(ptr: Num): Text {
             }
         }
     }
+    return str
 }
 
 pub fun init_referenced_objects(n: Num): [Bool] {

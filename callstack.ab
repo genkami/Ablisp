@@ -27,7 +27,7 @@ pub fun callstack_current_sp(): Num {
 }
 
 pub fun callstack_rewind(new_sp: Num): Null {
-    if new_sp < _stack_next {
+    if _stack_next < new_sp {
         echo "BUG: callstack_rewind: invalid location: {new_sp}"
     }
     _stack_next = new_sp

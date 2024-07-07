@@ -158,11 +158,68 @@ pub fun test_parse_sexp_list() {
     assert_ok_object_equal(val, want)?
 }
 
+fun test_parse_sexp_quote() {
+    test_section("test_parse_sexp_quote")
+    debug_clear_all_objects()
+
+    test_expectation("it should parse quoted numbers")
+    init_parser("'123")
+    let val = parse_sexp()
+    let want = new_nil()
+    want = new_cons(new_num(123), want)
+    want = new_cons(new_symbol("quote"), want)
+    assert_ok_object_equal(val, want)?
+
+    test_expectation("it should parse quoted texts")
+    init_parser("'\"bar\"")
+    let val = parse_sexp()
+    let want = new_nil()
+    want = new_cons(new_text("bar"), want)
+    want = new_cons(new_symbol("quote"), want)
+    assert_ok_object_equal(val, want)?
+    
+    test_expectation("it should parse quoted symbols")
+    init_parser("'hello")
+    let val = parse_sexp()
+    let want = new_nil()
+    want = new_cons(new_symbol("hello"), want)
+    want = new_cons(new_symbol("quote"), want)
+    assert_ok_object_equal(val, want)?
+    
+    test_expectation("it should parse quoted t")
+    init_parser("'t")
+    let val = parse_sexp()
+    let want = new_nil()
+    want = new_cons(new_t(), want)
+    want = new_cons(new_symbol("quote"), want)
+    assert_ok_object_equal(val, want)?
+    
+    test_expectation("it should parse quoted nil")
+    init_parser("'nil")
+    let val = parse_sexp()
+    let want = new_nil()
+    want = new_cons(new_nil(), want)
+    want = new_cons(new_symbol("quote"), want)
+    assert_ok_object_equal(val, want)?
+    
+    test_expectation("it should parse quoted list")
+    init_parser("'(1 2 \"3\")")
+    let val = parse_sexp()
+    let want = new_nil()
+    want = new_cons(new_text("3"), want)
+    want = new_cons(new_num(2), want)
+    want = new_cons(new_num(1), want)
+    want = new_cons(want, new_nil())
+    want = new_cons(new_symbol("quote"), want)
+    assert_ok_object_equal(val, want)?
+}
+
 pub fun test_parser() {
     test_parse_sexp_num()?
     test_parse_sexp_text()?
     test_parse_sexp_symlike()?
     test_parse_sexp_list()?
+    test_parse_sexp_quote()?
 }
 
 main {

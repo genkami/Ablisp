@@ -222,11 +222,46 @@ fun is_list_end(): Bool {
     return c == ")"
 }
 
+fun is_quote(): Bool {
+    let c = peek(0)
+    return c == "'"
+}
+
 pub fun parse_sexp(): [Text] {
     let stack_base = callstack_current_sp()
     let last_error = new_ok(0)
     let list_start = -1
+    let quote_next_object = -2
     loop {
+        // Here, the state of the top N elements of the stack is one of the following:
+        // - [] (empty)
+        //     + This means it haven't parsed any object yet.
+        // - [obj]
+        //     + This means the function parsed exactly one object and is about to return.
+        // - [obj_k, obj_{k-1}, ..., obj_1, list_start]
+        //     + This means the function is looking for the next object of a list.
+        //     + When it finds ')', it replaces the top k+1 elements with a single list.
+        // - [quote_next_object]
+        //     + This means the function consumed the "'" symbol just now and
+        //       is looking for an object to consume.
+        // - [obj, quote_next_object]
+        //     + This means the function has consumed both the "'" symbol and the object to quote.
+        //     + In this case, it replaces the top 2 elements with a single object of the form (quote obj).
+
+        if callstack_current_sp() >= stack_base + 2 {
+            let top1 = callstack_pop()
+            let top2 = callstack_pop()
+            if top1 >= 0 and top2 == quote_next_object {
+                let new_top = new_nil()
+                new_top = new_cons(top1, new_top)
+                new_top = new_cons(new_symbol("quote"), new_top)
+                callstack_push(new_top)
+            } else {
+                callstack_push(top2)
+                callstack_push(top1)
+            }
+        }
+
         if is_eof() {
             break
         }
@@ -289,6 +324,11 @@ pub fun parse_sexp(): [Text] {
                 list = new_cons(top, list)
             }
             callstack_push(list)
+            continue
+        }
+        if is_quote() {
+            consume_next()
+            callstack_push(quote_next_object)
             continue
         }
         last_error = new_parse_error("unexpected character: " + peek(0))
