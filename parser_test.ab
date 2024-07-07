@@ -82,6 +82,26 @@ fun test_parse_sexp_symlike() {
     init_parser("nil")
     let val = parse_sexp()
     assert_ok_object_eqv(val, new_nil())?
+
+    test_expectation("it should parse a symbol consisting of alphabets")
+    init_parser("foo")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_symbol("foo"))?
+    
+    test_expectation("it should parse a symbol consisting of alphabets and digits")
+    init_parser("f00")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_symbol("f00"))?
+    
+    test_expectation("it should parse a symbol consisting of alphabets and symbols")
+    init_parser(".set-car!")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_symbol(".set-car!"))?
+
+    test_expectation("it should parse a symbol consisting of symbols")
+    init_parser("+")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_symbol("+"))?
 }
 
 pub fun test_parser() {

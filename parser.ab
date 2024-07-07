@@ -174,7 +174,7 @@ fun consume_text(): [Text] {
 let symlike_head_chars = chars(
     "abcdefghijklmnopqrstuvwxyz" +
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-    "~!@$%^&*_+:.<>/?"
+    "~!@$%^&*-_=+:.<>/?"
 )
 
 let symlike_tail_chars = symlike_head_chars + chars(
@@ -206,7 +206,7 @@ fun consume_symlike(): [Text] {
             return new_ok(new_nil())
         }
         else {
-            return new_parse_error("symbol not supported")
+            return new_ok(new_symbol(name))
         }
     }
 }
@@ -226,18 +226,15 @@ pub fun parse_sexp(): [Text] {
     let last_error = new_ok(0)
     let list_start = -1
     loop {
-        echo "loop"
         if is_eof() {
             break
         }
         // TODO: break after consuming a single object
         if {
             is_whitespace() {
-                echo "wspace"
                 consume_next()
             }
             is_comment_begin() {
-                echo "comment"
                 let result = consume_comment()
                 if result_is_err(result) {
                     last_error = result
@@ -245,7 +242,6 @@ pub fun parse_sexp(): [Text] {
                 }
             }
             is_number_begin() {
-                echo "num"
                 let result = consume_number()
                 if result_is_err(result) {
                     last_error = result
@@ -254,7 +250,6 @@ pub fun parse_sexp(): [Text] {
                 callstack_push(ok_val(result))
             }
             is_text_begin() {
-                echo "text"
                 let result = consume_text()
                 if result_is_err(result) {
                     last_error = result
@@ -263,7 +258,6 @@ pub fun parse_sexp(): [Text] {
                 callstack_push(ok_val(result))
             }
             is_symlike_begin() {
-                echo "symlike"
                 let result = consume_symlike()
                 if result_is_err(result) {
                     last_error = result
@@ -272,12 +266,10 @@ pub fun parse_sexp(): [Text] {
                 callstack_push(ok_val(result))
             }
             is_list_begin() {
-                echo "list"
                 consume_next()
                 callstack_push(list_start)
             }
             is_list_end() {
-                echo "list-end"
                 consume_next()
                 let list = new_nil()
                 loop {
@@ -290,7 +282,6 @@ pub fun parse_sexp(): [Text] {
                 callstack_push(list)
             }
             else {
-                echo "else"
                 last_error = new_parse_error("unexpected character: " + peek(0))
                 break
             }
