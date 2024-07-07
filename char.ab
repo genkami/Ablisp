@@ -34,12 +34,14 @@ pub fun char_is_one_of(c: Text, chars: [Text]): Bool {
     return false
 }
 
+let alphas = chars("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
 pub fun char_is_alpha(c: Text): Bool {
-    let alphas = chars("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
     return char_is_one_of(c, alphas)
 }
 
+let digits = chars("0123456789")
+
 pub fun char_is_decimal_digit(c: Text): Bool {
-    let digits = chars("0123456789")
     return char_is_one_of(c, digits)
 }

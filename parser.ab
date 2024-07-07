@@ -90,20 +90,21 @@ fun consume_number(): [Text] {
     let value = 0
     
     let c = consume_next()
-    if {
-        c == "+" {
+    loop {
+        if c == "+" {
             has_explicit_sign = true
+            break
         }
-        c == "-" {
+        if c == "-" {
             has_explicit_sign = true
             sign = -1
+            break
         }
-        char_is_decimal_digit(c) {
+        if char_is_decimal_digit(c) {
             value = c as Num
+            break
         }
-        else {
-            return new_parse_error("invalid number: " + c)
-        }
+        return new_parse_error("invalid number: " + c)
     }
     let consumed_at_least_one_char = false
     loop {
@@ -230,62 +231,68 @@ pub fun parse_sexp(): [Text] {
             break
         }
         // TODO: break after consuming a single object
-        if {
-            is_whitespace() {
-                consume_next()
-            }
-            is_comment_begin() {
-                let result = consume_comment()
-                if result_is_err(result) {
-                    last_error = result
-                    break
-                }
-            }
-            is_number_begin() {
-                let result = consume_number()
-                if result_is_err(result) {
-                    last_error = result
-                    break
-                }
-                callstack_push(ok_val(result))
-            }
-            is_text_begin() {
-                let result = consume_text()
-                if result_is_err(result) {
-                    last_error = result
-                    break
-                }
-                callstack_push(ok_val(result))
-            }
-            is_symlike_begin() {
-                let result = consume_symlike()
-                if result_is_err(result) {
-                    last_error = result
-                    break
-                }
-                callstack_push(ok_val(result))
-            }
-            is_list_begin() {
-                consume_next()
-                callstack_push(list_start)
-            }
-            is_list_end() {
-                consume_next()
-                let list = new_nil()
-                loop {
-                    let top = callstack_pop()
-                    if top == list_start {
-                        break
-                    }
-                    list = new_cons(top, list)
-                }
-                callstack_push(list)
-            }
-            else {
-                last_error = new_parse_error("unexpected character: " + peek(0))
+        // NOTE: DO NOT use multiway if statement with function calls because it evaluates
+        // all predicates before actually branching, which makes the function
+        // significantly slower because each predicate may spawn many processes.
+        if is_whitespace() {
+            consume_next()
+            continue
+        }
+        if is_comment_begin() {
+            let result = consume_comment()
+            if result_is_err(result) {
+                last_error = result
                 break
             }
+            continue
         }
+        if is_number_begin() {
+            let result = consume_number()
+            if result_is_err(result) {
+                last_error = result
+                break
+            }
+            callstack_push(ok_val(result))
+            continue
+        }
+        if is_text_begin() {
+            let result = consume_text()
+            if result_is_err(result) {
+                last_error = result
+                break
+            }
+            callstack_push(ok_val(result))
+            continue
+        }
+        if is_symlike_begin() {
+            let result = consume_symlike()
+            if result_is_err(result) {
+                last_error = result
+                break
+            }
+            callstack_push(ok_val(result))
+            continue
+        }
+        if is_list_begin() {
+            consume_next()
+            callstack_push(list_start)
+            continue
+        }
+        if is_list_end() {
+            consume_next()
+            let list = new_nil()
+            loop {
+                let top = callstack_pop()
+                if top == list_start {
+                    break
+                }
+                list = new_cons(top, list)
+            }
+            callstack_push(list)
+            continue
+        }
+        last_error = new_parse_error("unexpected character: " + peek(0))
+        break
     }
     if result_is_err(last_error) {
         // rewind stack
