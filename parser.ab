@@ -295,23 +295,11 @@ pub fun parse_sexp(): [Text] {
         break
     }
     if result_is_err(last_error) {
-        // rewind stack
-        loop {
-            if callstack_current_sp() <= stack_base {
-                break
-            }
-            callstack_pop()
-        }
+        callstack_rewind(stack_base)
         return last_error
     }
     if callstack_current_sp() != stack_base + 1 {
-        // rewind stack
-        loop {
-            if callstack_current_sp() <= stack_base {
-                break
-            }
-            callstack_pop()
-        }
+        callstack_rewind(stack_base)
         return new_parse_error("unexpected EOF")
     }
     let last_value = callstack_pop()

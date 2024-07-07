@@ -339,13 +339,7 @@ pub fun object_equal(obj1: Num, obj2: Num): Bool {
         echo "BUG: object_equal: unexpected object tag: {tag1}"
         break
     }
-    // rewind stack
-    loop {
-        if callstack_current_sp() <= stack_base {
-            break
-        }
-        callstack_pop()
-    }
+    callstack_rewind(stack_base)
     return false
 }
 
