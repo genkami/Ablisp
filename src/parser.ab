@@ -235,6 +235,7 @@ pub fun parse_sexp(): [Text] {
     let quote_next_object = -2
     loop {
         // Here, the state of the top N elements of the stack is one of the following:
+        //   [(stack top) <----------- (bottom)]
         // - [] (empty)
         //     + This means it haven't parsed any object yet.
         // - [obj]

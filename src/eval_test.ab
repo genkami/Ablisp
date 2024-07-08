@@ -1,0 +1,52 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./parser.ab"
+import * from "./eval.ab"
+import * from "./testing.ab"
+
+fun parse_and_eval(sexp: Text, env: Num): Num {
+    init_parser(sexp)
+    let result_expr = parse_sexp()
+    assert_ok(result_expr)?
+    let expr = ok_val(result_expr)
+    let val = eval(expr, env)
+    assert_ok(val)?
+    return ok_val(val)
+}
+
+fun test_eval_literals() {
+    test_section("test_eval_literals")
+
+    test_expectation("when the expr is num, it should return the num")
+    debug_clear_all_objects()
+    let env = new_env()
+    let got = parse_and_eval("123", env)?
+    assert_object_equal(got, new_num(123))?
+
+    test_expectation("when the expr is text, it should return the text")
+    debug_clear_all_objects()
+    let env = new_env()
+    let got = parse_and_eval("\"foo\"", env)?
+    assert_object_equal(got, new_text("foo"))?
+
+    test_expectation("when the expr is t, it should return t")
+    debug_clear_all_objects()
+    let env = new_env()
+    let got = parse_and_eval("t", env)?
+    assert_object_equal(got, new_t())?
+
+    test_expectation("when the expr is nil, it should return nil")
+    debug_clear_all_objects()
+    let env = new_env()
+    let got = parse_and_eval("nil", env)?
+    assert_object_equal(got, new_nil())?
+}
+
+pub fun test_eval() {
+    test_eval_literals()?
+}
+
+main {
+    test_eval()?
+}

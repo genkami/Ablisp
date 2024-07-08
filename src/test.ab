@@ -3,6 +3,7 @@ import {test_object} from "./object_test.ab"
 import {test_env} from "./env_test.ab"
 import {test_char} from "./char_test.ab"
 import {test_parser} from "./parser_test.ab"
+import {test_eval} from "./eval.ab"
 
 main {
     test_error()?
@@ -10,4 +11,5 @@ main {
     test_env()?
     test_char()?
     test_parser()?
+    test_eval()?
 }

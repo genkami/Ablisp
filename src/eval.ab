@@ -1,0 +1,122 @@
+// Module eval provides an Ablisp evaluator.
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./callstack.ab"
+
+// Stack operations
+
+fun is_list_starting(obj: Num, head_sym_name: Text): Bool {
+    if not object_is_cons(obj) {
+        return false
+    }
+    let car = cons_car(obj)
+    if not object_is_symbol(car) {
+        return false
+    }
+    if symbol_name(car) != head_sym_name {
+        return false
+    }
+    return true
+}
+
+// `(evaluate expr env)` indicates that `eval` should evaluate `expr` with an environment `env`.
+fun new_op_evaluate(expr: Num, env: Num): Num {
+    let op = new_nil()
+    op = new_cons(env, op)
+    op = new_cons(expr, op)
+    op = new_cons(new_symbol("#:evaluate"), op)
+    return op
+}
+
+fun op_is_evaluate(op: Num): Bool {
+    return is_list_starting(op, "#:evaluate")
+}
+
+fun evaluate_expr(op: Num): Num {
+    let op_cdr = cons_cdr(op)         // (expr env)
+    let op_cadr = cons_car(op_cdr)    // expr
+    return op_cadr
+}
+
+fun evaluate_env(op: Num): Num {
+    let op_cdr = cons_cdr(op)         // (expr env)
+    let op_cddr = cons_cdr(op_cdr)    // (env)
+    let op_caddr = cons_car(op_cddr)  // env
+    return op_caddr
+}
+
+// (result val) indicates that `eval` evaluated a single expression in the previous loop
+// and the result is `val`.
+fun new_op_result(val: Num): Num {
+    let op = new_nil()
+    op = new_cons(val, op)
+    op = new_cons(new_symbol("#:result"), op)
+    return op
+}
+
+fun op_is_result(op: Num): Bool {
+    return is_list_starting(op, "#:result")
+}
+
+fun result_value(op: Num): Num {
+    let op_cdr = cons_cdr(op)      // (val)
+    let op_cadr = cons_car(op_cdr) // val
+    return op_cadr
+}
+
+// eval evaluates `expr` with a given `env` and returns an evaluated expression in result form.
+pub fun eval(expr: Num, env: Num): [Text] {
+    let last_error = new_ok(0)
+    let stack_base = callstack_current_sp()
+    callstack_push(new_op_evaluate(expr, env))
+    loop {
+        let op = callstack_pop()
+        if op_is_result(op) {
+            if callstack_current_sp() == stack_base {
+                callstack_push(op)
+                break
+            }
+            last_error = new_err(code_internal_error(), "TODO: implement recursive eval")
+            break
+        }
+        if op_is_evaluate(op) {
+            let expr = evaluate_expr(op)
+            let env = evaluate_env(op)
+            if object_is_num(expr) {
+                callstack_push(new_op_result(expr))
+                continue
+            }
+            if object_is_text(expr) {
+                callstack_push(new_op_result(expr))
+                continue
+            }
+            if object_is_t(expr) {
+                callstack_push(new_op_result(expr))
+                continue
+            }
+            if object_is_nil(expr) {
+                callstack_push(new_op_result(expr))
+                continue
+            }
+            last_error = new_err(code_internal_error(), "TODO: implement special forms and function applications")
+            break
+        }
+        last_error = new_err(code_internal_error(), "BUG: eval: unsupported operation: " + object_to_string(op))
+        break
+    }
+    if result_is_err(last_error) {
+        callstack_rewind(stack_base)
+        return last_error
+    }
+    if callstack_current_sp() != stack_base + 1 {
+        callstack_rewind(stack_base)
+        let top = callstack_pop()
+        callstack_push(top)
+        return new_err(code_internal_error(), "BUG: eval: unexpected stack state: top=" + object_to_string(top))
+    }
+    let top = callstack_pop()
+    if not op_is_result(top) {
+        return new_err(code_internal_error(), "BUG: eval: unexpected stack state: top=" + object_to_string(top))
+    }
+    return new_ok(result_value(top))
+}
