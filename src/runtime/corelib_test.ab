@@ -1,0 +1,9 @@
+import {test_runtime_corelib_math} from "./corelib/math_test.ab"
+
+pub fun test_runtime_corelib() {
+    test_runtime_corelib_math()?
+}
+
+main {
+    test_runtime_corelib()?
+}

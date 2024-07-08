@@ -1,0 +1,22 @@
+import * from "./math.ab"
+import * from "../../object.ab"
+import * from "../../native.ab"
+import * from "../../testing.ab"
+
+fun test_runtime_corelib_math_add() {
+    test_section("test_runtime_corelib_math_add")
+
+    test_expectation("when the argument list is empty, it should return 0")
+    debug_clear_all_objects()
+    let args = new_nil()
+    let result = native_call(runtime_corelib_math_add(), args)
+    assert_ok_object_equal(result, new_num(0))?
+}
+
+pub fun test_runtime_corelib_math() {
+    test_runtime_corelib_math_add()?
+}
+
+main {
+    test_runtime_corelib_math()?
+}

@@ -1,0 +1,135 @@
+// Module native provides native functions for Ablisp.
+import * from "./object.ab"
+import * from "./error.ab"
+
+fun default_retval(): [Text] {
+    return new_err(code_internal_error(), "return value not given")
+}
+
+let _last_funcref = ""
+let _should_track_next_funcall = false
+let _funcall_args = -1
+let _funcall_retval = default_retval()
+
+// native_track_next_funcall tracks the next call to a native function
+// and saves a funcref to the function.
+// The funcref it saved can be obtained by `native_get_last_funcref`.
+//
+// # Example Usage
+// Funcrefs can be obtained using `native_track_next_funcall()` and `native_get_last_funcref()`:
+//
+//     import * from "./native.ab"
+//     native_track_next_funcall()
+//     my_native_function()
+//     let funcref = native_get_last_funcref() // returns a reference to `my_native_function`
+//
+// Native functions can be called using `native_call()` with funcrefs.
+//
+//     import * from "./native.ab"
+//     import * from "./native.ab"
+//     import * from "./error.ab"
+//
+//     let funcref = ...           // a funcref obtained by `native_get_last_funcref()`
+//     let args = new_cons(...)    // list of args
+//     let result = native_call(ref, args)
+//     if result_is_err(result) { ... }
+//
+// # Native Function
+// A native function is an Amber function that can be called from Ablisp.
+// A native function should follow the following rules:
+// - It should not take any arguments and should return `Null`.
+// - It should first call `native_get_args()` before doing anything other, and
+//   if that fails, it should return immediately without doing anything.
+// - It should call `native_return(val)` before returning to pass a return value to its caller.
+//   If it does not have any return value, call `native_return(new_ok(new_nil()))`.
+// - It should not hold any reference to Ablisp objects on return, nor should it store them as global variables.
+//   They will be garbage collected when it tries to use them the next time.
+// - It should not call other native functions (including itself).
+//
+// A proper native function will look something like this:
+//
+//     fun my_native_function(): Null {
+//         let result_args = native_get_args()
+//         if result_is_err(result_args) {
+//             return null
+//         }
+//         let args = ok_val(result_args)
+//         let retval = ... // do whatever with args
+//         if some_condition {
+//             native_return(new_err(code_user_error(), "some error"))    
+//             return null
+//         }
+//         native_return(new_ok(retval))
+//     }
+pub fun native_track_next_funcall(): Null {
+    _should_track_next_funcall = true
+}
+
+pub fun native_get_last_funcref(): Text {
+    return _last_funcref
+}
+
+pub fun native_get_args(): [Text] {
+    if _should_track_next_funcall {
+        _should_track_next_funcall = false
+        _last_funcref = unsafe $echo "\$\{FUNCNAME[1]}"$
+        return new_err("native_function_tracked", "the function call is tracked")
+    }
+    if _funcall_args < 0 {
+        return new_err("improper_native_function_call", "native function should be called via native_call()")
+    }
+    let args = _funcall_args
+    _funcall_args = -1
+    _funcall_retval = default_retval()
+    return new_ok(args)
+}
+
+pub fun native_return(result: [Text]): Null {
+    _funcall_retval = result
+}
+
+pub fun native_call(funcref: Text, args: Num): [Text] {
+    _funcall_args = args
+    unsafe ${funcref}$
+    let result = _funcall_retval
+    _funcall_args = -1 // in case it didn't call native_get_args()
+    _funcall_retval = default_retval()
+    return result
+}
+
+// new_native_fun returns a new heap-allocated pointer to a native function.
+pub fun new_native_fun(funcref: Text): Num {
+    let val = new_nil()
+    val = new_cons(new_symbol(funcref), val)
+    val = new_cons(new_symbol("#:native"), val)
+    return val
+}
+
+pub fun object_is_native_fun(obj: Num): Bool {
+    if not object_is_cons(obj) {
+        return false
+    }
+    let tag = cons_car(obj)
+    let fun_name_and_rest = cons_cdr(obj)
+    if not object_is_symbol(tag) {
+        return false
+    }
+    if symbol_name(tag) != "#:native" {
+        return false
+    }
+    let fun_name = cons_car(fun_name_and_rest)
+    let rest = cons_cdr(fun_name_and_rest)
+    if not object_is_symbol(fun_name) {
+        return false
+    }
+    if not object_is_nil(rest) {
+        return false
+    }
+    return true
+}
+
+pub fun native_fun_funcref(f: Num): Text {
+    let cdr = cons_cdr(f)    // (funcref)
+    let cadr = cons_car(cdr) // funcref
+    return symbol_name(cadr)
+}

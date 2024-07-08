@@ -1,0 +1,92 @@
+// Module math provides math functions for Ablisp.
+
+import * from "../../native.ab"
+import * from "../../error.ab"
+import * from "../../object.ab"
+
+let _funcref_add = ""
+let _funcref_sub = ""
+
+pub fun runtime_corelib_math_add(): Text {
+    return _funcref_add
+}
+
+fun add_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    let sum = 0
+    loop {
+        if object_is_nil(args) {
+            break
+        }
+        if not object_is_cons(args) {
+            native_return(new_err(code_invalid_argument(), "add: invalid argument list: " + object_to_string(args)))
+            return null
+        }
+        let next = cons_car(args)
+        args = cons_cdr(args)
+        if not object_is_num(next) {
+            native_return(new_err(code_invalid_argument(), "add: not a number: " + object_to_string(next)))
+            return null
+        }
+        sum += num_value(next)
+    }
+    native_return(new_ok(new_num(sum)))
+}
+
+native_track_next_funcall()
+add_impl()
+_funcref_add = native_get_last_funcref()
+
+pub fun runtime_corelib_math_sub(): Text {
+    return _funcref_sub
+}
+
+fun sub_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "sub: empty argument: " + object_to_string(args)))
+        return null
+    }
+    let first_obj = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_num(first_obj) {
+        native_return(new_err(code_invalid_argument(), "sub: not a number: " + object_to_string(first_obj)))
+        return null
+    }
+    let result = num_value(first_obj)
+
+    let has_more_than_one_args = false
+    loop {
+        if object_is_nil(args) {
+            break
+        }
+        has_more_than_one_args = true
+        if not object_is_cons(args) {
+            native_return(new_err(code_invalid_argument(), "sub: invalid argument list: " + object_to_string(args)))
+            return null
+        }
+        let next = cons_car(args)
+        args = cons_cdr(args)
+        if not object_is_num(next) {
+            native_return(new_err(code_invalid_argument(), "sub: not a number: " + object_to_string(next)))
+            return null
+        }
+        result -= num_value(next)
+    }
+    if not has_more_than_one_args {
+        result = -result
+    }
+    native_return(new_ok(new_num(result)))
+}
+
+native_track_next_funcall()
+sub_impl()
+_funcref_sub = native_get_last_funcref()

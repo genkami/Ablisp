@@ -1,0 +1,9 @@
+import {test_runtime_corelib} from "./runtime/corelib_test.ab"
+
+pub fun test_runtime() {
+    test_runtime_corelib()?
+}
+
+main {
+    test_runtime()?
+}
