@@ -230,6 +230,7 @@ fun is_quote(): Bool {
 pub fun parse_sexp(): [Text] {
     let stack_base = callstack_current_sp()
     let last_error = new_ok(0)
+    let eof_before_next_object = false
     let list_start = -1
     let quote_next_object = -2
     loop {
@@ -261,8 +262,18 @@ pub fun parse_sexp(): [Text] {
                 callstack_push(top1)
             }
         }
+        if callstack_current_sp() == stack_base + 1 {
+            let top = callstack_pop()
+            callstack_push(top)
+            if top >= 0 {
+                // We have consumed exactly one object and
+                // we are not waiting for close parenthesis.
+                break
+            }
+        }
 
         if is_eof() {
+            eof_before_next_object = true
             break
         }
         // TODO: break after consuming a single object
@@ -333,6 +344,10 @@ pub fun parse_sexp(): [Text] {
         }
         last_error = new_parse_error("unexpected character: " + peek(0))
         break
+    }
+    if (callstack_current_sp() == stack_base) and eof_before_next_object {
+        // We reached an EOF without consuming any objects.
+        return new_err(code_stop_iteration(), "EOF")
     }
     if result_is_err(last_error) {
         callstack_rewind(stack_base)
