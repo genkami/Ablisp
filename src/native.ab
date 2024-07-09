@@ -69,6 +69,13 @@ pub fun native_get_last_funcref(): Text {
     return _last_funcref
 }
 
+// native_get_args returns arguments passed to native functions.
+// The reason why we provide `native_get_args/native_return` is that Amber functions
+// do not have unified calling conventions, which means there's no way to call
+// arbitrary functions even if we have funcrefs.
+// Instead of using normal args and return values, these functions provide
+// a common calling conventions for native functions, as well as providing
+// some hacks to get funcrefs.
 pub fun native_get_args(): [Text] {
     if _should_track_next_funcall {
         _should_track_next_funcall = false
