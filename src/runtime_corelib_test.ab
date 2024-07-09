@@ -1,4 +1,4 @@
-import {test_runtime_corelib_math} from "./corelib/math_test.ab"
+import {test_runtime_corelib_math} from "./runtime_corelib_math_test.ab"
 
 pub fun test_runtime_corelib() {
     test_runtime_corelib_math()?

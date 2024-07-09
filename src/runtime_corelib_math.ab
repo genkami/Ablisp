@@ -1,8 +1,8 @@
 // Module math provides math functions for Ablisp.
 
-import * from "../../native.ab"
-import * from "../../error.ab"
-import * from "../../object.ab"
+import * from "./native.ab"
+import * from "./error.ab"
+import * from "./object.ab"
 
 let _funcref_add = ""
 let _funcref_sub = ""
