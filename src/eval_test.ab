@@ -10,7 +10,7 @@ fun parse_and_eval(sexp: Text, env: Num): Num {
     let result_expr = parse_sexp()
     assert_ok(result_expr)?
     let expr = ok_val(result_expr)
-    let val = eval(expr, env)
+    let val = eval_expr(expr, env, "<toplevel>")
     assert_ok(val)?
     return ok_val(val)
 }

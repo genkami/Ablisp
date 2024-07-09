@@ -2,121 +2,119 @@
 import * from "./error.ab"
 import * from "./object.ab"
 import * from "./callstack.ab"
+import * from "./native.ab"
 
-// Stack operations
+let _funcref_eval_literal = ""
+let _funcref_eval_expr = ""
 
-fun is_list_starting(obj: Num, head_sym_name: Text): Bool {
-    if not object_is_cons(obj) {
-        return false
+fun expr_is_literal(expr: Num): Bool {
+    if object_is_num(expr) {
+        return true
     }
-    let car = cons_car(obj)
-    if not object_is_symbol(car) {
-        return false
+    if object_is_text(expr) {
+        return true
     }
-    if symbol_name(car) != head_sym_name {
-        return false
+    if object_is_t(expr) {
+        return true
     }
-    return true
+    if object_is_nil(expr) {
+        return true
+    }
+    return false
 }
 
-// `(evaluate expr env)` indicates that `eval` should evaluate `expr` with an environment `env`.
-fun new_op_evaluate(expr: Num, env: Num): Num {
-    let op = new_nil()
-    op = new_cons(env, op)
-    op = new_cons(expr, op)
-    op = new_cons(new_symbol("#:evaluate"), op)
-    return op
+fun eval_literal_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
+        err = err_add_trace(err, "eval_literal")
+        native_return(err)
+        return null
+    }
+    let expr = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
+        err = err_add_trace(err, "eval_literal")
+        native_return(err)
+        return null
+    }
+    native_return(new_ok(expr))
+    return null
 }
 
-fun op_is_evaluate(op: Num): Bool {
-    return is_list_starting(op, "#:evaluate")
-}
+native_track_next_funcall()
+eval_literal_impl()
+_funcref_eval_literal = native_get_last_funcref()
 
-fun evaluate_expr(op: Num): Num {
-    let op_cdr = cons_cdr(op)         // (expr env)
-    let op_cadr = cons_car(op_cdr)    // expr
-    return op_cadr
-}
-
-fun evaluate_env(op: Num): Num {
-    let op_cdr = cons_cdr(op)         // (expr env)
-    let op_cddr = cons_cdr(op_cdr)    // (env)
-    let op_caddr = cons_car(op_cddr)  // env
-    return op_caddr
-}
-
-// (result val) indicates that `eval` evaluated a single expression in the previous loop
-// and the result is `val`.
-fun new_op_result(val: Num): Num {
-    let op = new_nil()
-    op = new_cons(val, op)
-    op = new_cons(new_symbol("#:result"), op)
-    return op
-}
-
-fun op_is_result(op: Num): Bool {
-    return is_list_starting(op, "#:result")
-}
-
-fun result_value(op: Num): Num {
-    let op_cdr = cons_cdr(op)      // (val)
-    let op_cadr = cons_car(op_cdr) // val
-    return op_cadr
+pub fun eval_expr_funcref(): Text {
+    return _funcref_eval_expr
 }
 
 // eval evaluates `expr` with a given `env` and returns an evaluated expression in result form.
-pub fun eval(expr: Num, env: Num): [Text] {
-    let last_error = new_ok(0)
-    let stack_base = callstack_current_sp()
-    callstack_push(new_op_evaluate(expr, env))
-    loop {
-        let op = callstack_pop()
-        if op_is_result(op) {
-            if callstack_current_sp() == stack_base {
-                callstack_push(op)
-                break
-            }
-            last_error = new_err(code_internal_error(), "TODO: implement recursive eval")
-            break
-        }
-        if op_is_evaluate(op) {
-            let expr = evaluate_expr(op)
-            let env = evaluate_env(op)
-            if object_is_num(expr) {
-                callstack_push(new_op_result(expr))
-                continue
-            }
-            if object_is_text(expr) {
-                callstack_push(new_op_result(expr))
-                continue
-            }
-            if object_is_t(expr) {
-                callstack_push(new_op_result(expr))
-                continue
-            }
-            if object_is_nil(expr) {
-                callstack_push(new_op_result(expr))
-                continue
-            }
-            last_error = new_err(code_internal_error(), "TODO: implement special forms and function applications")
-            break
-        }
-        last_error = new_err(code_internal_error(), "BUG: eval: unsupported operation: " + object_to_string(op))
-        break
-    }
-    if result_is_err(last_error) {
-        callstack_rewind(stack_base)
-        return last_error
-    }
-    if callstack_current_sp() != stack_base + 1 {
-        callstack_rewind(stack_base)
-        let top = callstack_pop()
-        callstack_push(top)
-        return new_err(code_internal_error(), "BUG: eval: unexpected stack state: top=" + object_to_string(top))
-    }
-    let top = callstack_pop()
-    if not op_is_result(top) {
-        return new_err(code_internal_error(), "BUG: eval: unexpected stack state: top=" + object_to_string(top))
-    }
-    return new_ok(result_value(top))
+// `context` is a string to indicate where the expr is evaluated (mainly for debug purpose).
+pub fun eval_expr(expr: Num, env: Num, context: Text): [Text] {
+    let args = new_nil()
+    args = new_cons(new_text(context), args)
+    args = new_cons(env, args)
+    args = new_cons(expr, args)
+    return native_call(_funcref_eval_expr, args)
 }
+fun eval_expr_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
+        err = err_add_trace(err, "eval")
+        native_return(err)
+        return null
+    }
+    let expr = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
+        err = err_add_trace(err, "eval")
+        native_return(err)
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if (not object_is_cons(env)) or (not object_is_cons(args)) {
+        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
+        err = err_add_trace(err, "eval")
+        native_return(err)
+        return null
+    }
+    let context = cons_car(args)
+    args = cons_cdr(args)
+    if (not object_is_text(context)) or (not object_is_nil(args)) {
+        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
+        err = err_add_trace(err, "eval")
+        native_return(err)
+        return null
+    }
+    if expr_is_literal(expr) {
+        let result_val = native_call(_funcref_eval_literal, new_cons(expr, new_nil()))
+        if result_is_err(result_val) {
+            native_return(err_add_trace(result_val, "eval"))
+            return null
+        }
+        native_return(result_val)
+        return null
+    }
+    let err = new_err(code_internal_error(), "TODO: implement special forms and function applications")
+    err = err_add_trace(err, "eval")
+    native_return(err)
+    return null
+}
+
+native_track_next_funcall()
+eval_expr_impl()
+_funcref_eval_expr = native_get_last_funcref()

@@ -96,7 +96,11 @@ pub fun assert_ok(result: [Text]): Null {
     if not result_is_ok(result) {
         let code = err_code(result)
         let reason = err_reason(result)
-        fail_test("expecrted ok but got: {code} ({reason})")?
+        let traces = ""
+        loop t in err_traces(result) {
+            traces += "\nat {t}"
+        }
+        fail_test("expecrted ok but got: {code} ({reason}){traces}")?
     }
 }
 

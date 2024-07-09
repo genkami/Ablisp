@@ -97,6 +97,7 @@ pub fun native_return(result: [Text]): Null {
 
 pub fun native_call(funcref: Text, args: Num): [Text] {
     _funcall_args = args
+    _funcall_retval = err_add_trace(default_retval(), "native function <" + funcref + ">")
     unsafe ${funcref}$
     let result = _funcall_retval
     _funcall_args = -1 // in case it didn't call native_get_args()
