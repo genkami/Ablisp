@@ -241,13 +241,19 @@ pub fun object_eqv(ptr1: Num, ptr2: Num): Bool {
     let tag2 = tag_of(ptr2)
     if {
         tag1 == tag_num() {
-            return tag2 == tag_num() and num_value(ptr1) == num_value(ptr2)
+            let v1 = num_value(ptr1)
+            let v2 = num_value(ptr2)
+            return (tag2 == tag_num()) and (v1 == v2)
         }
         tag1 == tag_text() {
-            return tag2 == tag_text() and text_value(ptr1) == text_value(ptr2)
+            let v1 = text_value(ptr1)
+            let v2 = text_value(ptr2)
+            return (tag2 == tag_text()) and (v1 == v2)
         }
         tag1 == tag_symbol() {
-            return tag2 == tag_symbol() and symbol_name(ptr1) == symbol_name(ptr2)
+            let v1 = symbol_name(ptr1)
+            let v2 = symbol_name(ptr2)
+            return (tag2 == tag_symbol()) and (v1 == v2)
         }
         tag1 == tag_t() {
             return tag2 == tag_t()

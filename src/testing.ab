@@ -120,7 +120,10 @@ pub fun assert_ok_object_equal(result: [Text], obj: Num): Null {
 }
 
 pub fun assert_err(result: [Text]): Null {
-    assert(result_is_err(result), "value is not err: {result}")?
+    if not result_is_err(result) {
+        let val = object_to_string(ok_val(result))
+        fail_test("value is not err: {val}")?
+    }
 }
 
 pub fun assert_err_code(result: [Text], code: Text): Null {

@@ -3,8 +3,10 @@ import * from "./error.ab"
 import * from "./object.ab"
 import * from "./callstack.ab"
 import * from "./native.ab"
+import * from "./env.ab"
 
 let _funcref_eval_literal = ""
+let _funcref_eval_var = ""
 let _funcref_eval_expr = ""
 
 fun expr_is_literal(expr: Num): Bool {
@@ -50,6 +52,53 @@ fun eval_literal_impl(): Null {
 native_track_next_funcall()
 eval_literal_impl()
 _funcref_eval_literal = native_get_last_funcref()
+
+fun expr_is_var(expr: Num): Bool {
+    return object_is_symbol(expr)
+}
+
+fun eval_var_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(ok_val(result_args)))
+        err = err_add_trace(err, "eval_var")
+        native_return(err)
+        return null
+    }
+    let name = cons_car(args)
+    args = cons_cdr(args)
+    if (not object_is_symbol(name)) or (not object_is_cons(args)) {
+        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(ok_val(result_args)))
+        err = err_add_trace(err, "eval_var")
+        native_return(err)
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(ok_val(result_args)))
+        err = err_add_trace(err, "eval_var")
+        native_return(err)
+        return null
+    }
+
+    let val = env_lookup(env, name)
+    if result_is_err(val) {
+        let err = err_add_trace(val, "eval_var")
+        native_return(err)
+        return null
+    }
+    native_return(val)
+    return null
+}
+
+native_track_next_funcall()
+eval_var_impl()
+_funcref_eval_var = native_get_last_funcref()
 
 pub fun eval_expr_funcref(): Text {
     return _funcref_eval_expr
@@ -102,6 +151,17 @@ fun eval_expr_impl(): Null {
     }
     if expr_is_literal(expr) {
         let result_val = native_call(_funcref_eval_literal, new_cons(expr, new_nil()))
+        if result_is_err(result_val) {
+            native_return(err_add_trace(result_val, "eval"))
+            return null
+        }
+        native_return(result_val)
+        return null
+    }
+    if expr_is_var(expr) {
+        let args = new_cons(env, new_nil())
+        args = new_cons(expr, args)
+        let result_val = native_call(_funcref_eval_var, args)
         if result_is_err(result_val) {
             native_return(err_add_trace(result_val, "eval"))
             return null

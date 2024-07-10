@@ -18,6 +18,10 @@ fun test_env_lookup() {
     result = env_lookup(env, new_symbol("foo"))
     assert_ok_object_eqv(result, new_num(123))?
 
+    test_expectation("if a variable is not defined, env_lookup should return undefined_variable")
+    result = env_lookup(env, new_symbol("bar"))
+    assert_err_code(result, code_undefined_variable())?
+
     test_expectation("adding a new variable definition does not affect existing definitions")
     env = env_define(env, new_symbol("bar"), new_num(456))
     result = env_lookup(env, new_symbol("foo"))
