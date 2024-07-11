@@ -52,20 +52,42 @@ fun eval_app(expr: Num, env: Num, context: Num): [Text] {
         return err
     }
     let fun_expr = cons_car(expr)
-    let fun_args_exprs = cons_cdr(expr)
+    let args_exprs = cons_cdr(expr)
 
     let eval_fun_args = new_nil()
     let result_fun_val = eval_expr(fun_expr, env, text_value(context))
     if result_is_err(result_fun_val) {
         return result_fun_val
     }
-    // TODO: evaluate args
+    
+    let args_val_array = [Num]
+    let iter = args_exprs
+    loop {
+        if object_is_nil(iter) {
+            break
+        }
+        if not object_is_cons(iter) {
+            let err = new_err(code_syntax_error(), "malformed function application: " + object_to_string(expr))
+            return err
+        }
+        let arg_expr = cons_car(iter)
+        iter = cons_cdr(iter)
+        let result_arg_val = eval_expr(arg_expr, env, text_value(context))
+        if result_is_err(result_arg_val) {
+            return result_arg_val
+        }
+        args_val_array = [ok_val(result_arg_val)] + args_val_array
+    }
+
+    let args_vals = new_nil()
+    loop i in args_val_array {
+        args_vals = new_cons(i, args_vals)
+    }
     
     let fun_val = ok_val(result_fun_val)
     if object_is_native_fun(fun_val) {
         let fref = native_fun_funcref(fun_val)
-        // TODO: pass args
-        let call_result = native_call(fref, new_nil())
+        let call_result = native_call(fref, args_vals)
         return call_result
     }
     // TODO: support non-native functions
