@@ -5,10 +5,17 @@ import * from "./callstack.ab"
 import * from "./native.ab"
 import * from "./env.ab"
 
-let _funcref_eval_literal = ""
-let _funcref_eval_var = ""
-let _funcref_eval_app = ""
 let _funcref_eval_expr = ""
+
+// eval evaluates `expr` with a given `env` and returns an evaluated expression in result form.
+// `context` is a string to indicate where the expr is evaluated (mainly for debug purpose).
+pub fun eval_expr(expr: Num, env: Num, context: Text): [Text] {
+    let args = new_nil()
+    args = new_cons(new_text(context), args)
+    args = new_cons(env, args)
+    args = new_cons(expr, args)
+    return native_call(_funcref_eval_expr, args)
+}
 
 fun expr_is_literal(expr: Num): Bool {
     if object_is_num(expr) {
@@ -26,131 +33,31 @@ fun expr_is_literal(expr: Num): Bool {
     return false
 }
 
-fun eval_literal_impl(): Null {
-    let result_args = native_get_args()
-    if result_is_err(result_args) {
-        return null
-    }
-    let args = ok_val(result_args)
-    if not object_is_cons(args) {
-        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
-        err = err_add_trace(err, "eval_literal")
-        native_return(err)
-        return null
-    }
-    let expr = cons_car(args)
-    args = cons_cdr(args)
-    if not object_is_nil(args) {
-        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
-        err = err_add_trace(err, "eval_literal")
-        native_return(err)
-        return null
-    }
-    native_return(new_ok(expr))
-    return null
+fun eval_literal(expr: Num): [Text] {
+    return new_ok(expr)
 }
-
-native_track_next_funcall()
-eval_literal_impl()
-_funcref_eval_literal = native_get_last_funcref()
 
 fun expr_is_var(expr: Num): Bool {
     return object_is_symbol(expr)
 }
 
-fun eval_var_impl(): Null {
-    let result_args = native_get_args()
-    if result_is_err(result_args) {
-        return null
-    }
-    let args = ok_val(result_args)
-    if not object_is_cons(args) {
-        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(ok_val(result_args)))
-        err = err_add_trace(err, "eval_var")
-        native_return(err)
-        return null
-    }
-    let name = cons_car(args)
-    args = cons_cdr(args)
-    if (not object_is_symbol(name)) or (not object_is_cons(args)) {
-        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(ok_val(result_args)))
-        err = err_add_trace(err, "eval_var")
-        native_return(err)
-        return null
-    }
-    let env = cons_car(args)
-    args = cons_cdr(args)
-    if not object_is_nil(args) {
-        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(ok_val(result_args)))
-        err = err_add_trace(err, "eval_var")
-        native_return(err)
-        return null
-    }
-
-    let val = env_lookup(env, name)
-    if result_is_err(val) {
-        let err = err_add_trace(val, "eval_var")
-        native_return(err)
-        return null
-    }
-    native_return(val)
-    return null
+fun eval_var(expr: Num, env: Num): [Text] {
+    return env_lookup(env, expr)
 }
 
-native_track_next_funcall()
-eval_var_impl()
-_funcref_eval_var = native_get_last_funcref()
-
-fun eval_app_impl(): Null {
+fun eval_app(expr: Num, env: Num, context: Num): [Text] {
     // TODO: evaluate args
-    let result_args = native_get_args()
-    if result_is_err(result_args) {
-        return null
-    }
-    let args = ok_val(result_args)
-    if not object_is_cons(args) {
-        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(ok_val(result_args)))
-        native_return(err)
-        return null
-    }
-    let expr = cons_car(args)
-    args = cons_cdr(args)
-    if not object_is_cons(args) {
-        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
-        native_return(err)
-        return null
-    }
-    let env = cons_car(args)
-    args = cons_cdr(args)
-    if (not object_is_cons(env)) or (not object_is_cons(args)) {
-        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
-        native_return(err)
-        return null
-    }
-    let context = cons_car(args)
-    args = cons_cdr(args)
-    if (not object_is_text(context)) or (not object_is_nil(args)) {
-        let err = new_err(code_invalid_argument(), "invalid argument: " + object_to_string(args))
-        native_return(err)
-        return null
-    }
-
     if not object_is_cons(expr) {
         let err = new_err(code_syntax_error(), "malformed function application: " + object_to_string(expr))
-        native_return(err)
-        return null
+        return err
     }
     let fun_expr = cons_car(expr)
     let fun_args_exprs = cons_cdr(expr)
 
     let eval_fun_args = new_nil()
-    eval_fun_args = new_cons(context, eval_fun_args)
-    eval_fun_args = new_cons(env, eval_fun_args)
-    eval_fun_args = new_cons(fun_expr, eval_fun_args)
-    let result_fun_val = native_call(_funcref_eval_expr, eval_fun_args)
+    let result_fun_val = eval_expr(fun_expr, env, text_value(context))
     if result_is_err(result_fun_val) {
-        native_return(result_fun_val)
-        return null
+        return result_fun_val
     }
     // TODO: evaluate args
     
@@ -159,31 +66,15 @@ fun eval_app_impl(): Null {
         let fref = native_fun_funcref(fun_val)
         // TODO: pass args
         let call_result = native_call(fref, new_nil())
-        native_return(call_result)
-        return null
+        return call_result
     }
     // TODO: support non-native functions
     let err = new_err(code_value_error(), object_to_string(fun_val) + " is not callable")
-    native_return(err)
-    return null
+    return err
 }
-
-native_track_next_funcall()
-eval_app_impl()
-_funcref_eval_app = native_get_last_funcref()
 
 pub fun eval_expr_funcref(): Text {
     return _funcref_eval_expr
-}
-
-// eval evaluates `expr` with a given `env` and returns an evaluated expression in result form.
-// `context` is a string to indicate where the expr is evaluated (mainly for debug purpose).
-pub fun eval_expr(expr: Num, env: Num, context: Text): [Text] {
-    let args = new_nil()
-    args = new_cons(new_text(context), args)
-    args = new_cons(env, args)
-    args = new_cons(expr, args)
-    return native_call(_funcref_eval_expr, args)
 }
 
 fun eval_expr_impl(): Null {
@@ -223,31 +114,17 @@ fun eval_expr_impl(): Null {
         return null
     }
     if expr_is_literal(expr) {
-        let result_val = native_call(_funcref_eval_literal, new_cons(expr, new_nil()))
-        if result_is_err(result_val) {
-            native_return(err_add_trace(result_val, "eval"))
-            return null
-        }
+        let result_val = eval_literal(expr)
         native_return(result_val)
         return null
     }
     if expr_is_var(expr) {
-        let args = new_cons(env, new_nil())
-        args = new_cons(expr, args)
-        let result_val = native_call(_funcref_eval_var, args)
-        if result_is_err(result_val) {
-            native_return(err_add_trace(result_val, "eval"))
-            return null
-        }
+        let result_val = eval_var(expr, env)
         native_return(result_val)
         return null
     }
-    let args = new_nil()
-    args = new_cons(context, args)
-    args = new_cons(env, args)
-    args = new_cons(expr, args)
-    let result = native_call(_funcref_eval_app, args)
-    native_return(result)
+    let result_val = eval_app(expr, env, context)
+    native_return(result_val)
     return null
 }
 
