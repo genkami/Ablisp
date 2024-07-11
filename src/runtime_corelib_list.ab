@@ -1,0 +1,18 @@
+// Module base provides base functions for Ablisp.
+
+import * from "./native.ab"
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./eval.ab"
+
+// TODO:
+// - (list a b c)
+// - map
+// - filter
+// - iota
+// - foldl/foldr
+
+pub fun runtime_corelib_list_import(env: Num): Num {
+    return env
+}
