@@ -9,6 +9,5 @@ import * from "./runtime_corelib_base.ab"
 pub fun runtime_corelib_import(env: Num): Num {
     env = runtime_corelib_base_import(env)
     env = runtime_corelib_math_import(env)
-    env = env_define(env, new_symbol("eval"), new_native_fun(eval_expr_funcref()))
     return env
 }

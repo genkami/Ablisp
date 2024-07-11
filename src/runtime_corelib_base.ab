@@ -6,8 +6,37 @@ import * from "./object.ab"
 import * from "./env.ab"
 import * from "./eval.ab"
 
+let _echo_desc = "Prints arguments.
+
+```
+> (echo \"Hello\")
+Hello
+;=> nil
+> (echo \"Hello\" \"world\")
+Hello
+world
+;=> nil
+```
+"
 let _funcref_echo = ""
+
+let _error_desc = "Raises a user error.
+
+```
+> (error \"wrong argument!\")
+Error: user_error: wrong argument!
+at native function <error_impl__677_v0>
+```
+"
 let _funcref_error = ""
+
+let _exit_desc = "Exits the interpreter.
+
+```
+> (exit)
+;=> interpreter exits
+```
+"
 let _funcref_exit = ""
 
 pub fun runtime_corelib_base_echo_funcref(): Text {
@@ -96,8 +125,17 @@ native_track_next_funcall()
 exit_impl()
 _funcref_exit = native_get_last_funcref()
 
+// TODO:
+// - eval
+// - help
+// - if
+// - let/letrec
+// - and/or
+// - foreach
+
 pub fun runtime_corelib_base_import(env: Num): Num {
-    env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo))
-    env = env_define(env, new_symbol("error"), new_native_fun(_funcref_error))
+    env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo, _echo_desc))
+    env = env_define(env, new_symbol("error"), new_native_fun(_funcref_error, _error_desc))
+    env = env_define(env, new_symbol("exit"), new_native_fun(_funcref_exit, _exit_desc))
     return env
 }

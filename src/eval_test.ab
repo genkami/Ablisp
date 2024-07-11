@@ -104,14 +104,14 @@ fun test_eval_native_fun() {
     test_expectation("it should call a function (no arg)")
     debug_clear_all_objects()
     let env = new_env()
-    env = env_define(env, new_symbol("f"), new_native_fun(_funcref_const_123))
+    env = env_define(env, new_symbol("f"), new_native_fun(_funcref_const_123, "test"))
     let got = must_parse_and_eval("(f)", env)?
     assert_object_equal(got, new_num(123))?
 
     test_expectation("it should call a function (single arg)")
     debug_clear_all_objects()
     let env = new_env()
-    env = env_define(env, new_symbol("f"), new_native_fun(_funcref_return_args))
+    env = env_define(env, new_symbol("f"), new_native_fun(_funcref_return_args, "test"))
     env = env_define(env, new_symbol("x"), new_num(1))
     let got = must_parse_and_eval("(f x)", env)?
     let want = new_nil()
@@ -121,7 +121,7 @@ fun test_eval_native_fun() {
     test_expectation("it should call a function (many args)")
     debug_clear_all_objects()
     let env = new_env()
-    env = env_define(env, new_symbol("f"), new_native_fun(_funcref_return_args))
+    env = env_define(env, new_symbol("f"), new_native_fun(_funcref_return_args, "test"))
     env = env_define(env, new_symbol("x"), new_num(1))
     env = env_define(env, new_symbol("y"), new_num(2))
     env = env_define(env, new_symbol("z"), new_t())

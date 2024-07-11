@@ -6,8 +6,9 @@ import * from "./native.ab"
 import * from "./env.ab"
 
 // new_native_fun returns a new heap-allocated pointer to a native function.
-pub fun new_native_fun(funcref: Text): Num {
+pub fun new_native_fun(funcref: Text, desc: Text): Num {
     let val = new_nil()
+    val = new_cons(new_text(desc), val)
     val = new_cons(new_symbol(funcref), val)
     val = new_cons(new_symbol("#:native"), val)
     return val
@@ -18,28 +19,26 @@ pub fun object_is_native_fun(obj: Num): Bool {
         return false
     }
     let tag = cons_car(obj)
-    let fun_name_and_rest = cons_cdr(obj)
     if not object_is_symbol(tag) {
         return false
     }
     if symbol_name(tag) != "#:native" {
         return false
     }
-    let fun_name = cons_car(fun_name_and_rest)
-    let rest = cons_cdr(fun_name_and_rest)
-    if not object_is_symbol(fun_name) {
-        return false
-    }
-    if not object_is_nil(rest) {
-        return false
-    }
     return true
 }
 
 pub fun native_fun_funcref(f: Num): Text {
-    let cdr = cons_cdr(f)    // (funcref)
+    let cdr = cons_cdr(f)    // (funcref desc)
     let cadr = cons_car(cdr) // funcref
     return symbol_name(cadr)
+}
+
+pub fun native_fun_desc(f: Num): Text {
+    let cdr = cons_cdr(f)      // (funcref desc)
+    let cddr = cons_cdr(cdr)   // (desc)
+    let caddr = cons_car(cddr) // desc
+    return text_value(caddr)
 }
 
 // new_special_form returns a new heap-allocated pointer to a native function.
@@ -57,8 +56,9 @@ pub fun native_fun_funcref(f: Num): Text {
 //   the arguments passed to `special_f_impl` will be `(env ctx (+ 1 2) 3)`,
 //   where `env` is the current environment, `ctx` is the name of current execution
 //   context, and `(+ 1 2)` is a list of a symbol and numbers.
-pub fun new_special_form(funcref: Text): Num {
+pub fun new_special_form(funcref: Text, desc: Text): Num {
     let val = new_nil()
+    val = new_cons(new_text(desc), val)
     val = new_cons(new_symbol(funcref), val)
     val = new_cons(new_symbol("#:special"), val)
     return val
@@ -69,19 +69,10 @@ pub fun object_is_special_form(obj: Num): Bool {
         return false
     }
     let tag = cons_car(obj)
-    let fun_name_and_rest = cons_cdr(obj)
     if not object_is_symbol(tag) {
         return false
     }
     if symbol_name(tag) != "#:special" {
-        return false
-    }
-    let fun_name = cons_car(fun_name_and_rest)
-    let rest = cons_cdr(fun_name_and_rest)
-    if not object_is_symbol(fun_name) {
-        return false
-    }
-    if not object_is_nil(rest) {
         return false
     }
     return true
@@ -93,6 +84,12 @@ pub fun special_form_funcref(f: Num): Text {
     return symbol_name(cadr)
 }
 
+pub fun special_form_desc(f: Num): Text {
+    let cdr = cons_cdr(f)      // (funcref desc)
+    let cddr = cons_cdr(cdr)   // (desc)
+    let caddr = cons_car(cddr) // desc
+    return text_value(caddr)
+}
 
 let _funcref_eval_expr = ""
 
