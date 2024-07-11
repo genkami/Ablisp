@@ -1,8 +1,9 @@
 // Module math provides math functions for Ablisp.
 
-import * from "./native.ab"
 import * from "./error.ab"
 import * from "./object.ab"
+import * from "./native.ab"
+import * from "./env.ab"
 
 let _funcref_add = ""
 let _funcref_sub = ""
@@ -92,6 +93,7 @@ sub_impl()
 _funcref_sub = native_get_last_funcref()
 
 pub fun runtime_corelib_math_import(env: Num): Num {
-    env = env_define("+", new_native_fun(_funcref_add))
-    env = env_define("-", new_native_fun(_funcref_sub))
+    env = env_define(env, new_symbol("+"), new_native_fun(_funcref_add))
+    env = env_define(env, new_symbol("-"), new_native_fun(_funcref_sub))
+    return env
 }
