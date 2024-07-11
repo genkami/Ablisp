@@ -132,6 +132,12 @@ _funcref_exit = native_get_last_funcref()
 // - let/letrec
 // - and/or
 // - foreach
+// - quote
+// - set
+// - set-car
+// - set-cdr
+// - catch
+// - (err code reason)
 
 pub fun runtime_corelib_base_import(env: Num): Num {
     env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo, _echo_desc))

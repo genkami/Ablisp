@@ -1,5 +1,15 @@
 // Module callstack provides stacks for heap objects to implement recursive functions.
 // The stack itself is not allocated in the heap.
+//
+// The reason why we provide callstack is because Amber functions cannot call themselves recursively.
+// There are two ways to write a recursive algorithm in Amber:
+// - Convert the algorithm into an iterative one and use `callstack` to memorize function states.
+//   This is faster than the other solution, so use `callstack` if possible.
+// - Use native functions provided by `native.ab`.
+//   Native functions are functions that can be called from Abilsp,
+//   but it also allows functions to recursively call themselves (and even allows mutual recursion).
+//   Use native functions only when the function needs to be called from Ablisp,
+//   because native functions tend to be extremely slow.
 
 import {len} from "std"
 
