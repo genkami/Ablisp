@@ -1,9 +1,9 @@
 // Module parser provides an S-expression parser.
 
 import {len, chars} from "std"
+import * from "./char.ab"
 import * from "./object.ab"
 import * from "./callstack.ab"
-import * from "./char.ab"
 import * from "./error.ab"
 
 let _buf = [Text]
@@ -71,16 +71,25 @@ fun consume_comment(): [Text] {
     }
 }
 
+let digit_chars = chars("0123456789")
+
 fun is_number_begin(): Bool {
     let c0 = peek(0)
-    if char_is_decimal_digit(c0) {
-        return true
+    loop digit in digit_chars {
+        if c0 == digit {
+            return true
+        }
     }
-    if not char_is_one_of(c0, ["+", "-"]) {
+    if (c0 != "+") and (c0 != "-") {
         return false
     }
     let c1 = peek(1)
-    return char_is_decimal_digit(c1)
+    loop digit in digit_chars {
+        if c1 == digit {
+            return true
+        }
+    }
+    return false
 }
 
 #[allow_absurd_cast]
@@ -100,7 +109,14 @@ fun consume_number(): [Text] {
             sign = -1
             break
         }
-        if char_is_decimal_digit(c) {
+        let is_digit = false
+        loop digit in digit_chars {
+            if c == digit {
+                is_digit = true
+                break
+            }
+        }
+        if is_digit {
             value = c as Num
             break
         }
@@ -112,7 +128,14 @@ fun consume_number(): [Text] {
             break
         }
         c = peek(0)
-        if not char_is_decimal_digit(c) {
+        let is_digit = false
+        loop digit in digit_chars {
+            if c == digit {
+                is_digit = true
+                break
+            }
+        }
+        if not is_digit {
             break
         }
         consume_next()
@@ -183,7 +206,13 @@ let symlike_tail_chars = symlike_head_chars + chars(
 )
 
 fun is_symlike_begin(): Bool {
-    return char_is_one_of(peek(0), symlike_head_chars)
+    let c = peek(0)
+    loop d in symlike_head_chars {
+        if c == d {
+            return true
+        }
+    }
+    return false
 }
 
 fun consume_symlike(): [Text] {
@@ -193,7 +222,14 @@ fun consume_symlike(): [Text] {
             break
         }
         let c = peek(0)
-        if not char_is_one_of(c, symlike_tail_chars) {
+        let is_tail_char = false
+        loop d in symlike_tail_chars {
+            if c == d {
+                is_tail_char = true
+                break
+            }
+        }
+        if not is_tail_char {
             break
         }
         consume_next()
