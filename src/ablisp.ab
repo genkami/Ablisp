@@ -42,12 +42,12 @@ pub fun run_file(args) {
         }
         let expr = ok_val(result_expr)
         let result_val = eval_expr(expr, env, "<toplevel>")
-        if result_is_err(result_expr) {
-            let code = err_code(result_expr)
+        if result_is_err(result_val) {
+            let code = err_code(result_val)
             if code == code_exit_interpreter() {
                 break
             }
-            show_error(result_expr)
+            show_error(result_val)
             fail 1
         }
     }
