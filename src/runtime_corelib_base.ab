@@ -4,6 +4,7 @@ import * from "./native.ab"
 import * from "./error.ab"
 import * from "./object.ab"
 import * from "./env.ab"
+import * from "./eval.ab"
 
 let _funcref_echo = ""
 let _funcref_error = ""
