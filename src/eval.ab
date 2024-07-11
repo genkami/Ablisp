@@ -88,6 +88,10 @@ fun eval_app(expr: Num, env: Num, context: Num): [Text] {
     if object_is_native_fun(fun_val) {
         let fref = native_fun_funcref(fun_val)
         let call_result = native_call(fref, args_vals)
+        if result_is_err(call_result) {
+            let err = err_add_trace(call_result, "native function <" + fref + ">")
+            return err
+        }
         return call_result
     }
     // TODO: support non-native functions

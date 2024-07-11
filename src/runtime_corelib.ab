@@ -1,0 +1,8 @@
+// Module corelib provides a core library for Amber.
+import * from "./runtime_corelib_math.ab"
+import * from "./runtime_corelib_base.ab"
+
+pub fun runtime_corelib_import(env: Num): Num {
+    env = runtime_corelib_base_import(env)
+    return env
+}

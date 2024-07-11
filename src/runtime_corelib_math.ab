@@ -90,3 +90,8 @@ fun sub_impl(): Null {
 native_track_next_funcall()
 sub_impl()
 _funcref_sub = native_get_last_funcref()
+
+pub fun runtime_corelib_math_import(env: Num): Num {
+    env = env_define("+", new_native_fun(_funcref_add))
+    env = env_define("-", new_native_fun(_funcref_sub))
+}

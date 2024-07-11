@@ -1,0 +1,102 @@
+// Module base provides base functions for Ablisp.
+
+import * from "./native.ab"
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+
+let _funcref_echo = ""
+let _funcref_error = ""
+let _funcref_exit = ""
+
+pub fun runtime_corelib_base_echo_funcref(): Text {
+    return _funcref_echo
+}
+
+fun echo_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    loop {
+        if object_is_nil(args) {
+            break
+        }
+        if not object_is_cons(args) {
+            native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+            return null
+        }
+        let msg = cons_car(args)
+        args = cons_cdr(args)
+        if not object_is_text(msg) {
+            native_return(new_err(code_invalid_argument(), "argument is not text: " + object_to_string(msg)))
+            return null
+        }
+        echo text_value(msg)
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+echo_impl()
+_funcref_echo = native_get_last_funcref()
+
+pub fun runtime_corelib_base_error_funcref(): Text {
+    return _funcref_error
+}
+
+fun error_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let msg = cons_car(args)
+    args = cons_cdr(args)
+    if (not object_is_text(msg)) or (not object_is_nil(args)) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let err = new_err(code_user_error(), text_value(msg))
+    native_return(err)
+    return null
+}
+
+native_track_next_funcall()
+error_impl()
+_funcref_error = native_get_last_funcref()
+
+pub fun runtime_corelib_base_exit_funcref(): Text {
+    return _funcref_exit
+}
+
+fun exit_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let err = new_err(code_exit_interpreter(), "exit")
+    native_return(err)
+    return null
+}
+
+native_track_next_funcall()
+exit_impl()
+_funcref_exit = native_get_last_funcref()
+
+pub fun runtime_corelib_base_import(env: Num): Num {
+    env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo))
+    env = env_define(env, new_symbol("error"), new_native_fun(_funcref_error))
+    return env
+}

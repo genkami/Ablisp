@@ -1,0 +1,58 @@
+import {len, file_read} from "std"
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./parser.ab"
+import * from "./eval.ab"
+import * from "./runtime_corelib.ab"
+
+fun show_error(err: [Text]): Null {
+    let code = err_code(err)
+    let reason = err_reason(err)
+    let traces = err_traces(err)
+    echo "Error: {code}: {reason}"
+    loop t in traces {
+        echo "at {t}"
+    }
+}
+
+pub fun run_file(args) {
+    if len(args) != 1 {
+        echo "Usage: ablisp /path/to/file.lisp"
+        fail 1
+    }
+    let path = args[0]
+    let source = file_read(path) failed {
+        echo "failed to read {path}"
+        fail 1
+    }
+    init_parser(source)
+    let env = new_env()
+    env = runtime_corelib_import(env)
+    loop {
+        garbage_collect([env])
+        let result_expr = parse_sexp()
+        if result_is_err(result_expr) {
+            let code = err_code(result_expr)
+            if code == code_stop_iteration() {
+                break
+            }
+            show_error(result_expr)
+            fail 1
+        }
+        let expr = ok_val(result_expr)
+        let result_val = eval_expr(expr, env, "<toplevel>")
+        if result_is_err(result_expr) {
+            let code = err_code(result_expr)
+            if code == code_exit_interpreter() {
+                break
+            }
+            show_error(result_expr)
+            fail 1
+        }
+    }
+}
+
+main(args) {
+    run_file(args)?
+}
