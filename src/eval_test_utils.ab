@@ -1,0 +1,54 @@
+// Module eval_test_utils provides utilitiy functions to test Ablisp expressions.
+
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./parser.ab"
+import * from "./eval.ab"
+import * from "./testing.ab"
+import * from "./runtime_corelib.ab"
+
+pub fun parse_and_eval(sexp: Text, env: Num): [Text] {
+    init_parser(sexp)
+    let result_expr = parse_sexp()
+    assert_ok(result_expr)?
+    let expr = ok_val(result_expr)
+    return eval_expr(expr, env, "<toplevel>")
+}
+
+pub fun must_parse_and_eval(sexp: Text, env: Num): Num {
+    let val = parse_and_eval(sexp, env)?
+    assert_ok(val)?
+    return ok_val(val)
+}
+
+pub fun assert_exprs_equal(lhs_code: Text, rhs_code: Text, env: Num): Null {
+    init_parser(lhs_code)
+    let result_lhs_expr = parse_sexp()
+    assert_ok(result_lhs_expr)?
+    let lhs_expr = ok_val(result_lhs_expr)
+
+    init_parser(rhs_code)
+    let result_rhs_expr = parse_sexp()
+    assert_ok(result_rhs_expr)?
+    let rhs_expr = ok_val(result_rhs_expr)
+
+    let result_lhs_val = eval_expr(lhs_expr, env, "<lhs toplevel>")
+    assert_ok(result_lhs_val)?
+    let lhs_val = ok_val(result_lhs_val)
+
+    let result_rhs_val = eval_expr(rhs_expr, env, "<rhs toplevel>")
+    assert_ok(result_rhs_val)?
+    let rhs_val = ok_val(result_rhs_val)
+
+    assert_object_equal(lhs_val, rhs_val)?
+}
+
+pub fun assert_expr_raises_err(sexp: Text, code: Text, env: Num): Null {
+    init_parser(sexp)
+    let result_expr = parse_sexp()
+    assert_ok(result_expr)?
+    let expr = ok_val(result_expr)
+
+    let result_val = eval_expr(expr, env, "<toplevel>")
+    assert_err_code(result_val, code)?
+}

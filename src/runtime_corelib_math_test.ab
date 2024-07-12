@@ -1,20 +1,34 @@
-import * from "./runtime_corelib_math.ab"
+import * from "./error.ab"
 import * from "./object.ab"
-import * from "./native.ab"
+import * from "./env.ab"
+import * from "./runtime_corelib.ab"
 import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
 
 fun test_runtime_corelib_math_add() {
-    test_section("test_runtime_corelib_math_add_funcref")
-
-    test_expectation("when the argument list is empty, it should return 0")
+    test_section("test_runtime_corelib_math_add")
+    test_expectation("it should add arguments")
     debug_clear_all_objects()
-    let args = new_nil()
-    let result = native_call(runtime_corelib_math_add_funcref(), args)
-    assert_ok_object_equal(result, new_num(0))?
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal("(+)", "0", env)?
+    assert_exprs_equal("(+ 1)", "1", env)?
+    assert_exprs_equal("(+ 1 2 3)", "6", env)?
+}
+
+fun test_runtime_corelib_math_sub() {
+    test_section("test_runtime_corelib_math_sub")
+    test_expectation("it should subtract arguments")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_expr_raises_err("(-)", code_invalid_argument(), env)?
+    assert_exprs_equal("(- 123)", "-123", env)?
+    assert_exprs_equal("(- 3 2)", "1", env)?
+    assert_exprs_equal("(- 3 2 1)", "0", env)?
 }
 
 pub fun test_runtime_corelib_math() {
     test_runtime_corelib_math_add()?
+    test_runtime_corelib_math_sub()?
 }
 
 main {

@@ -1,24 +1,10 @@
 import * from "./error.ab"
 import * from "./object.ab"
 import * from "./env.ab"
-import * from "./parser.ab"
-import * from "./eval.ab"
 import * from "./native.ab"
+import * from "./eval.ab"
 import * from "./testing.ab"
-
-fun parse_and_eval(sexp: Text, env: Num): [Text] {
-    init_parser(sexp)
-    let result_expr = parse_sexp()
-    assert_ok(result_expr)?
-    let expr = ok_val(result_expr)
-    return eval_expr(expr, env, "<toplevel>")
-}
-
-fun must_parse_and_eval(sexp: Text, env: Num): Num {
-    let val = parse_and_eval(sexp, env)?
-    assert_ok(val)?
-    return ok_val(val)
-}
+import * from "./eval_test_utils.ab"
 
 fun test_eval_literal() {
     test_section("test_eval_literal")

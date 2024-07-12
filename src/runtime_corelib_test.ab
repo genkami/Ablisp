@@ -1,6 +1,8 @@
+import {test_runtime_corelib_base} from "./runtime_corelib_base_test.ab"
 import {test_runtime_corelib_math} from "./runtime_corelib_math_test.ab"
 
 pub fun test_runtime_corelib() {
+    test_runtime_corelib_base()?
     test_runtime_corelib_math()?
 }
 
