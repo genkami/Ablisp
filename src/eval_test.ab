@@ -133,10 +133,48 @@ fun test_eval_native_fun() {
     assert_object_equal(got, want)?
 }
 
+let _funcref_special_return_args = ""
+
+fun special_return_args_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    native_return(result_args)
+    return null
+}
+
+native_track_next_funcall()
+special_return_args_impl()
+_funcref_special_return_args = native_get_last_funcref()
+
+fun test_eval_special_form() {
+    test_section("test_eval_special_form")
+
+    test_expectation("it should call a special form with unevaluated args")
+    let env = new_env()
+    env = env_define(env, new_symbol("f"), new_special_form(_funcref_special_return_args, "test"))
+    let got = must_parse_and_eval("(f x (+ 1 y) z)", env)?
+    let got_env = cons_car(got)
+    assert_object_equal(got_env, env)?
+    got = cons_cdr(got) // skip context
+    got = cons_cdr(got)
+    let want = new_nil()
+    want = new_cons(new_symbol("z"), want)
+    let elem = new_nil()
+    elem = new_cons(new_symbol("y"), elem)
+    elem = new_cons(new_num(1), elem)
+    elem = new_cons(new_symbol("+"), elem)
+    want = new_cons(elem, want)
+    want = new_cons(new_symbol("x"), want)
+    assert_object_equal(got, want)?
+}
+
 pub fun test_eval() {
     test_eval_literal()?
     test_eval_var()?
     test_eval_native_fun()?
+    test_eval_special_form()?
 }
 
 main {

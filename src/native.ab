@@ -96,6 +96,10 @@ pub fun native_return(result: [Text]): Null {
 }
 
 pub fun native_call(funcref: Text, args: Num): [Text] {
+    // sanity check
+    if funcref == "" {
+        return new_err(code_invalid_argument(), "null funcref")
+    }
     _funcall_args = args
     _funcall_retval = err_add_trace(default_retval(), "native function <" + funcref + ">")
     unsafe ${funcref}$

@@ -145,7 +145,19 @@ fun eval_app(expr: Num, env: Num, context: Num): [Text] {
     if result_is_err(result_fun_val) {
         return result_fun_val
     }
-    
+    let fun_val = ok_val(result_fun_val)
+    if object_is_special_form(fun_val) {
+        let fref = special_form_funcref(fun_val)
+        let sf_args = new_cons(context, args_exprs)
+        sf_args = new_cons(env, sf_args)
+        let call_result = native_call(fref, sf_args)
+        if result_is_err(call_result) {
+            let err = err_add_trace(call_result, "special form <" + fref + ">")
+            return err
+        }
+        return call_result
+    }
+
     let args_val_array = [Num]
     let iter = args_exprs
     loop {
@@ -170,7 +182,6 @@ fun eval_app(expr: Num, env: Num, context: Num): [Text] {
         args_vals = new_cons(i, args_vals)
     }
     
-    let fun_val = ok_val(result_fun_val)
     if object_is_native_fun(fun_val) {
         let fref = native_fun_funcref(fun_val)
         let call_result = native_call(fref, args_vals)
