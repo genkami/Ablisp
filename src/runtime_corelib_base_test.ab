@@ -12,6 +12,7 @@ fun test_runtime_corelib_base_error() {
     debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
     assert_expr_raises_err("(error \"foo\")", code_user_error(), env)?
+    assert_expr_raises_err("(error \"my_error\" \"foo\")", "my_error", env)?
 }
 
 fun test_runtime_corelib_base_exit() {

@@ -67,6 +67,9 @@ let _error_desc = "Raises a user error.
 > (error \"wrong argument!\")
 Error: user_error: wrong argument!
 at native function <error_impl__677_v0>
+> (error \"my_error\" \"something is wrong\") ; custom error code
+Error: my_error: something is wrong
+at native function <error_impl__677_v0>
 ```
 "
 
@@ -82,11 +85,33 @@ fun error_impl(): Null {
     }
     let msg = cons_car(args)
     args = cons_cdr(args)
-    if (not object_is_text(msg)) or (not object_is_nil(args)) {
+    if not object_is_text(msg) {
         native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
         return null
     }
-    let err = new_err(code_user_error(), text_value(msg))
+    let code = ""
+    if object_is_nil(args) {
+        code = code_user_error()
+    }
+    if object_is_cons(args) {
+        let next = cons_car(args)
+        if not object_is_text(next) {
+            native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+            return null
+        }
+        code = text_value(msg)
+        msg = next
+        args = cons_cdr(args)
+        if not object_is_nil(args) {
+            native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+            return null
+        }
+    }
+    if code == "" {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let err = new_err(code, text_value(msg))
     native_return(err)
     return null
 }
