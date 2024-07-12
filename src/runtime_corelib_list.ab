@@ -12,6 +12,8 @@ import * from "./eval.ab"
 // - filter
 // - iota
 // - foldl/foldr
+// - assq/assv
+// - assoc
 
 pub fun runtime_corelib_list_import(env: Num): Num {
     return env

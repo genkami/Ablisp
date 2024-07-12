@@ -23,8 +23,8 @@ pub fun init_parser(text: Text): Null {
 }
 
 fun new_parse_error(reason: Text): [Text] {
-        let err = new_err(code_parse_error(), reason)
-        return err_add_trace(err, "line {_line}, column {_column}")
+    let err = new_err(code_parse_error(), reason)
+    return err_add_trace(err, "line {_line}, column {_column}")
 }
 
 fun peek(n: Num): Text {

@@ -6,6 +6,14 @@ import * from "./object.ab"
 import * from "./env.ab"
 import * from "./eval.ab"
 
+let _funcref_echo = ""
+let _funcref_error = ""
+let _funcref_exit = ""
+
+pub fun runtime_corelib_base_echo_funcref(): Text {
+    return _funcref_echo
+}
+
 let _echo_desc = "Prints arguments.
 
 ```
@@ -18,30 +26,6 @@ world
 ;=> nil
 ```
 "
-let _funcref_echo = ""
-
-let _error_desc = "Raises a user error.
-
-```
-> (error \"wrong argument!\")
-Error: user_error: wrong argument!
-at native function <error_impl__677_v0>
-```
-"
-let _funcref_error = ""
-
-let _exit_desc = "Exits the interpreter.
-
-```
-> (exit)
-;=> interpreter exits
-```
-"
-let _funcref_exit = ""
-
-pub fun runtime_corelib_base_echo_funcref(): Text {
-    return _funcref_echo
-}
 
 fun echo_impl(): Null {
     let result_args = native_get_args()
@@ -77,6 +61,15 @@ pub fun runtime_corelib_base_error_funcref(): Text {
     return _funcref_error
 }
 
+let _error_desc = "Raises a user error.
+
+```
+> (error \"wrong argument!\")
+Error: user_error: wrong argument!
+at native function <error_impl__677_v0>
+```
+"
+
 fun error_impl(): Null {
     let result_args = native_get_args()
     if result_is_err(result_args) {
@@ -106,6 +99,14 @@ pub fun runtime_corelib_base_exit_funcref(): Text {
     return _funcref_exit
 }
 
+let _exit_desc = "Exits the interpreter.
+
+```
+> (exit)
+;=> interpreter exits
+```
+"
+
 fun exit_impl(): Null {
     let result_args = native_get_args()
     if result_is_err(result_args) {
@@ -126,6 +127,7 @@ exit_impl()
 _funcref_exit = native_get_last_funcref()
 
 // TODO:
+// - eqv/equal
 // - eval
 // - help
 // - if
@@ -133,6 +135,7 @@ _funcref_exit = native_get_last_funcref()
 // - and/or
 // - foreach
 // - quote
+// - car/cdr
 // - set
 // - set-car
 // - set-cdr

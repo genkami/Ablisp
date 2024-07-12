@@ -6,6 +6,13 @@ import * from "./native.ab"
 import * from "./env.ab"
 import * from "./eval.ab"
 
+let _funcref_add = ""
+let _funcref_sub = ""
+
+pub fun runtime_corelib_math_add_funcref(): Text {
+    return _funcref_add
+}
+
 let _add_desc = "Adds arguments.
 
 ```
@@ -17,24 +24,6 @@ let _add_desc = "Adds arguments.
 ;=> 6
 ```
 "
-let _funcref_add = ""
-
-let _sub_desc = "Subtracts arguments.
-
-```
-> (- 3)
-;=> -3
-> (- 3 2)
-;=> 1
-> (- 3 2 1)
-;=> 0
-```
-"
-let _funcref_sub = ""
-
-pub fun runtime_corelib_math_add_funcref(): Text {
-    return _funcref_add
-}
 
 fun add_impl(): Null {
     let result_args = native_get_args()
@@ -69,6 +58,18 @@ _funcref_add = native_get_last_funcref()
 pub fun runtime_corelib_math_sub_funcref(): Text {
     return _funcref_sub
 }
+
+let _sub_desc = "Subtracts arguments.
+
+```
+> (- 3)
+;=> -3
+> (- 3 2)
+;=> 1
+> (- 3 2 1)
+;=> 0
+```
+"
 
 fun sub_impl(): Null {
     let result_args = native_get_args()
