@@ -11,7 +11,7 @@ let _funcref_error = ""
 let _funcref_exit = ""
 let _funcref_eqv = ""
 let _funcref_equal = ""
-let _funcref_quote = ""
+let _funcref_special_quote = ""
 let _funcref_cons = ""
 let _funcref_car = ""
 let _funcref_cdr = ""
@@ -271,11 +271,11 @@ native_track_next_funcall()
 equal_impl()
 _funcref_equal = native_get_last_funcref()
 
-pub fun runtime_corelib_base_quote_funcref(): Text {
-    return _funcref_quote
+pub fun runtime_corelib_base_special_quote_funcref(): Text {
+    return _funcref_special_quote
 }
 
-let _quote_desc = "Returns an unevaluated argument.
+let _special_quote_desc = "Returns an unevaluated argument.
 
 ```
 > (quote 3)
@@ -289,7 +289,7 @@ let _quote_desc = "Returns an unevaluated argument.
 ```
 "
 
-fun quote_impl(): Null {
+fun special_quote_impl(): Null {
     let result_args = native_get_args()
     if result_is_err(result_args) {
         return null
@@ -322,8 +322,8 @@ fun quote_impl(): Null {
 }
 
 native_track_next_funcall()
-quote_impl()
-_funcref_quote = native_get_last_funcref()
+special_quote_impl()
+_funcref_special_quote = native_get_last_funcref()
 
 fun runtime_corelib_base_cons_funcref(): Text {
     return _funcref_cons
@@ -632,7 +632,7 @@ pub fun runtime_corelib_base_import(env: Num): Num {
     env = env_define(env, new_symbol("exit"), new_native_fun(_funcref_exit, _exit_desc))
     env = env_define(env, new_symbol("eqv?"), new_native_fun(_funcref_eqv, _eqv_desc))
     env = env_define(env, new_symbol("equal?"), new_native_fun(_funcref_equal, _equal_desc))
-    env = env_define(env, new_symbol("quote"), new_special_form(_funcref_quote, _quote_desc))
+    env = env_define(env, new_symbol("quote"), new_special_form(_funcref_special_quote, _special_quote_desc))
     env = env_define(env, new_symbol("cons"), new_native_fun(_funcref_cons, _cons_desc))
     env = env_define(env, new_symbol("car"), new_native_fun(_funcref_car, _car_desc))
     env = env_define(env, new_symbol("cdr"), new_native_fun(_funcref_cdr, _cdr_desc))
