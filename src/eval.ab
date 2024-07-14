@@ -45,6 +45,55 @@ fun eval_var(expr: Num, env: Num): [Text] {
     return env_lookup(env, expr)
 }
 
+fun apply_closure(cl: Num, args: Num): [Text] {
+    let ctx = closure_name(cl)
+    let params = closure_params(cl)
+    let body = closure_body(cl)
+    let env = closure_env(cl)
+
+    loop {
+        if object_is_nil(params) {
+            if not object_is_nil(args) {
+                return new_err(code_invalid_argument(), "argument number mismatch")
+            }
+            break
+        }
+        if object_is_nil(args) {
+            if not object_is_nil(params) {
+                return new_err(code_invalid_argument(), "argument number mismatch")
+            }
+            break
+        }
+        let param = cons_car(params)
+        params = cons_cdr(params)
+        let arg = cons_car(args)
+        args = cons_cdr(args)
+
+        if not object_is_symbol(param) {
+            return new_err(code_syntax_error(), "invalid parameter name: " + object_to_string(param))
+        }
+        env = env_define(env, param, arg)
+    }
+
+    let last_value = new_nil()
+    loop {
+        if object_is_nil(body) {
+            break
+        }
+        if not object_is_cons(body) {
+            return new_err(code_syntax_error(), "invalid closure body: " + object_to_string(body))
+        }
+        let expr = cons_car(body)
+        body = cons_cdr(body)
+        let result = eval_expr(expr, env, ctx)
+        if result_is_err(result) {
+            return result
+        }
+        last_value = ok_val(result)
+    }
+    return new_ok(last_value)
+}
+
 fun eval_app(expr: Num, env: Num, context: Num): [Text] {
     if not object_is_cons(expr) {
         let err = new_err(code_syntax_error(), "malformed function application: " + object_to_string(expr))
@@ -104,7 +153,15 @@ fun eval_app(expr: Num, env: Num, context: Num): [Text] {
         }
         return call_result
     }
-    // TODO: support non-native functions
+
+    if object_is_closure(fun_val) {
+        let call_result = apply_closure(fun_val, args_vals)
+        if result_is_err(call_result) {
+            let err = err_add_trace(call_result, text_value(context))
+            return err
+        }
+        return call_result
+    }
     let err = new_err(code_value_error(), object_to_string(fun_val) + " is not callable")
     return err
 }

@@ -331,6 +331,60 @@ pub fun special_form_desc(f: Num): Text {
     return text_value(caddr)
 }
 
+pub fun new_closure(name: Num, params: Num, body: Num, env: Num): Num {
+    let cl = new_nil()
+    cl = new_cons(env, cl)
+    cl = new_cons(body, cl)
+    cl = new_cons(params, cl)
+    cl = new_cons(name, cl)
+    cl = new_cons(new_symbol("#:closure"), cl)
+    return cl
+}
+
+pub fun object_is_closure(obj: Num): Bool {
+    if not object_is_cons(obj) {
+        return false
+    }
+    let tag = cons_car(obj)
+    if not object_is_symbol(tag) {
+        return false
+    }
+    if symbol_name(tag) != "#:closure" {
+        return false
+    }
+    return true
+}
+
+pub fun closure_name(cl: Num): Text {
+    let cdr = cons_cdr(cl)     // (name params body env)
+    let cadr = cons_car(cdr)   // name
+    return text_value(cadr)
+}
+
+pub fun closure_params(cl: Num): Num {
+    let cdr = cons_cdr(cl)     // (name params body env)
+    let cddr = cons_cdr(cdr)   // (params body env)
+    let caddr = cons_car(cddr) // params
+    return caddr
+}
+
+pub fun closure_body(cl: Num): Num {
+    let cdr = cons_cdr(cl)        // (name params body env)
+    let cddr = cons_cdr(cdr)      // (params body env)
+    let cdddr = cons_cdr(cddr)    // (body env)
+    let cadddr = cons_car(cdddr)  // body
+    return cadddr
+}
+
+pub fun closure_env(cl: Num): Num {
+    let cdr = cons_cdr(cl)          // (name params body env)
+    let cddr = cons_cdr(cdr)        // (params body env)
+    let cdddr = cons_cdr(cddr)      // (body env)
+    let cddddr = cons_cdr(cdddr)    // (env)
+    let caddddr = cons_car(cddddr)  // env
+    return caddddr
+}
+
 pub fun object_is_quotation(obj: Num): Bool {
     if not object_is_cons(obj) {
         return false
@@ -562,6 +616,11 @@ pub fun object_to_string(ptr: Num): Text {
         if object_is_special_form(ptr) {
             let name = special_form_funcref(ptr)
             str += "<#:special {name}>"
+            continue
+        }
+        if object_is_closure(ptr) {
+            let name = closure_name(ptr)
+            str += "<#:closure {name}>"
             continue
         }
         if object_is_quotation(ptr) {

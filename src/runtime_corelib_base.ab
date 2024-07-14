@@ -20,6 +20,7 @@ let _funcref_set_cdr = ""
 let _funcref_special_set = ""
 let _funcref_special_if = ""
 let _funcref_special_let = ""
+let _funcref_special_lambda = ""
 
 pub fun runtime_corelib_base_echo_funcref(): Text {
     return _funcref_echo
@@ -746,28 +747,28 @@ fun special_let_impl(): Null {
             break
         }
         if not object_is_cons(var_binds) {
-            native_return(new_err(code_invalid_argument(), "invalid variable binding: " + object_to_string(var_binds)))
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(var_binds)))
             return null
         }
         let bind = cons_car(var_binds)
         var_binds = cons_cdr(var_binds)
         if not object_is_cons(bind) {
-            native_return(new_err(code_invalid_argument(), "invalid variable binding: " + object_to_string(bind)))
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(bind)))
             return null
         }
         let var_name = cons_car(bind)
         let var_expr_and_rest = cons_cdr(bind)
         if not object_is_symbol(var_name) {
-            native_return(new_err(code_invalid_argument(), "invalid variable name: " + object_to_string(var_name)))
+            native_return(new_err(code_syntax_error(), "invalid variable name: " + object_to_string(var_name)))
             return null
         }
         if not object_is_cons(var_expr_and_rest) {
-            native_return(new_err(code_invalid_argument(), "invalid variable binding: " + object_to_string(bind)))
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(bind)))
             return null
         }
         let var_expr = cons_car(var_expr_and_rest)
         if not object_is_nil(cons_cdr(var_expr_and_rest)) {
-            native_return(new_err(code_invalid_argument(), "invalid variable binding: " + object_to_string(bind)))
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(bind)))
             return null
         }
         
@@ -786,7 +787,7 @@ fun special_let_impl(): Null {
             break
         }
         if not object_is_cons(body) {
-            native_return(new_err(code_invalid_argument(), "invalid let body: " + object_to_string(body)))
+            native_return(new_err(code_syntax_error(), "invalid let body: " + object_to_string(body)))
             return null
         }
         let expr = cons_car(body)
@@ -807,6 +808,78 @@ native_track_next_funcall()
 special_let_impl()
 _funcref_special_let = native_get_last_funcref()
 
+pub fun runtime_corelib_base_special_lambda_funcref(): Text {
+    return _funcref_special_lambda
+}
+
+let _special_lambda_desc = "Makes an anonymous function.
+
+```
+> ((lambda (a b)
+       (echo \"Calculating...\")
+       (+ a b))
+   1 2)
+Calculating...
+;=> 3
+```
+"
+
+fun special_lambda_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+    let params = cons_car(args)
+    let body = cons_cdr(args)
+
+    let iter = params
+    loop {
+        if object_is_nil(iter) {
+            break
+        }
+        if not object_is_cons(iter) {
+            native_return(new_err(code_syntax_error(), "invalid parameter list: " + object_to_string(params)))
+            return null
+        }
+        let param = cons_car(iter)
+        iter = cons_cdr(iter)
+        if not object_is_symbol(param) {
+            native_return(new_err(code_syntax_error(), "invalid parameter list: " + object_to_string(params)))
+            return null
+        }
+    }
+    let name = ctx + "/<lambda>"
+    let name = new_text(name)
+    let cl = new_closure(name, params, body, env)
+    native_return(new_ok(cl))
+    return null
+}
+
+native_track_next_funcall()
+special_lambda_impl()
+_funcref_special_lambda = native_get_last_funcref()
 
 // TODO:
 // - eval
@@ -816,7 +889,6 @@ _funcref_special_let = native_get_last_funcref()
 // - catch
 // - object->string
 // - begin
-// - lambda
 
 pub fun runtime_corelib_base_import(env: Num): Num {
     env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo, _echo_desc))
@@ -833,5 +905,6 @@ pub fun runtime_corelib_base_import(env: Num): Num {
     env = env_define(env, new_symbol("set!"), new_special_form(_funcref_special_set, _special_set_desc))
     env = env_define(env, new_symbol("if"), new_special_form(_funcref_special_if, _special_if_desc))
     env = env_define(env, new_symbol("let"), new_special_form(_funcref_special_let, _special_let_desc))
+    env = env_define(env, new_symbol("lambda"), new_special_form(_funcref_special_lambda, _special_lambda_desc))
     return env
 }
