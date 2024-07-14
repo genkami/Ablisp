@@ -1,5 +1,6 @@
 // Module syntax provides basic syntax for Ablisp.
 
+import {len} from "std"
 import * from "./native.ab"
 import * from "./error.ab"
 import * from "./object.ab"
@@ -11,6 +12,7 @@ let _funcref_special_set = ""
 let _funcref_special_if = ""
 let _funcref_special_cond = ""
 let _funcref_special_let = ""
+let _funcref_special_letrec = ""
 let _funcref_special_lambda = ""
 
 pub fun runtime_corelib_syntax_special_quote_funcref(): Text {
@@ -321,6 +323,10 @@ native_track_next_funcall()
 special_cond_impl()
 _funcref_special_cond = native_get_last_funcref()
 
+pub fun runtime_corelib_syntax_special_let_funcref(): Text {
+    return _funcref_special_let
+}
+
 let _special_let_desc = "Binds values to local variables.
 
 ```
@@ -428,6 +434,155 @@ native_track_next_funcall()
 special_let_impl()
 _funcref_special_let = native_get_last_funcref()
 
+pub fun runtime_corelib_syntax_special_letrec_funcref(): Text {
+    return _funcref_special_letrec
+}
+
+let _special_letrec_desc = "Similar to `let`, but when binding values to variables,
+their expression can access the local variables that are being defined.
+
+```
+> (letrec ((f (lambda (n) (if (eqv? n 0) 0 (+ n (g (- n 1))))))
+           (g (lambda (n) (if (eqv? n 0) 0 (+ n (f (- n 1)))))))
+      (f 3))
+;=> 6
+```
+"
+
+fun special_letrec_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+
+    let var_binds = cons_car(args)
+    let body = cons_cdr(args)
+
+    let iter = var_binds
+    let var_names = [Num]
+    loop {
+        if object_is_nil(iter) {
+            break
+        }
+        if not object_is_cons(iter) {
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(var_binds)))
+            return null
+        }
+        let bind = cons_car(iter)
+        iter = cons_cdr(iter)
+        if not object_is_cons(bind) {
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(bind)))
+            return null
+        }
+        let var_name = cons_car(bind)
+        if not object_is_symbol(var_name) {
+            native_return(new_err(code_syntax_error(), "invalid variable name: " + object_to_string(var_name)))
+            return null
+        }
+        var_names += [var_name]
+        env = env_define(env, var_name, new_nil())
+    }
+
+    let iter = var_binds
+    let var_values = [Num]
+    loop {
+        if object_is_nil(iter) {
+            break
+        }
+        if not object_is_cons(iter) {
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(var_binds)))
+            return null
+        }
+        let bind = cons_car(iter)
+        iter = cons_cdr(iter)
+        if not object_is_cons(bind) {
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(bind)))
+            return null
+        }
+        let var_expr_and_rest = cons_cdr(bind)
+        if not object_is_cons(var_expr_and_rest) {
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(bind)))
+            return null
+        }
+        let var_expr = cons_car(var_expr_and_rest)
+        if not object_is_nil(cons_cdr(var_expr_and_rest)) {
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(bind)))
+            return null
+        }
+        
+        let var_val_result = eval_expr(var_expr, env, ctx)
+        if result_is_err(var_val_result) {
+            native_return(var_val_result)
+            return null
+        }
+        let var_val = ok_val(var_val_result)
+        var_values += [var_val]
+    }
+
+    let i = 0
+    loop {
+        if len(var_names) <= i {
+            break
+        }
+        let name = var_names[i]
+        let value = var_values[i]
+        let set_result = env_set(env, name, value)
+        if result_is_err(set_result) {
+            native_return(set_result)
+            return null
+        }
+        i += 1
+    }
+
+    let last_val = new_nil()
+    loop {
+        if object_is_nil(body) {
+            break
+        }
+        if not object_is_cons(body) {
+            native_return(new_err(code_syntax_error(), "invalid let body: " + object_to_string(body)))
+            return null
+        }
+        let expr = cons_car(body)
+        body = cons_cdr(body)
+
+        let val_result = eval_expr(expr, env, ctx)
+        if result_is_err(val_result) {
+            native_return(val_result)
+            return null
+        }
+        last_val = ok_val(val_result)
+    }
+    native_return(new_ok(last_val))
+    return null
+}
+
+native_track_next_funcall()
+special_letrec_impl()
+_funcref_special_letrec = native_get_last_funcref()
+
 pub fun runtime_corelib_syntax_special_lambda_funcref(): Text {
     return _funcref_special_lambda
 }
@@ -502,9 +657,9 @@ special_lambda_impl()
 _funcref_special_lambda = native_get_last_funcref()
 
 // TODO:
-// - letrec
 // - and/or
 // - begin
+// - def/defun
 
 pub fun runtime_corelib_syntax_import(env: Num): Num {
     env = env_define(env, new_symbol("quote"), new_special_form(_funcref_special_quote, _special_quote_desc))
@@ -512,6 +667,7 @@ pub fun runtime_corelib_syntax_import(env: Num): Num {
     env = env_define(env, new_symbol("set!"), new_special_form(_funcref_special_set, _special_set_desc))
     env = env_define(env, new_symbol("cond"), new_special_form(_funcref_special_cond, _special_cond_desc))
     env = env_define(env, new_symbol("if"), new_special_form(_funcref_special_if, _special_if_desc))
+    env = env_define(env, new_symbol("letrec"), new_special_form(_funcref_special_letrec, _special_letrec_desc))
     env = env_define(env, new_symbol("let"), new_special_form(_funcref_special_let, _special_let_desc))
     return env
 }

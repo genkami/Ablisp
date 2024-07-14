@@ -33,6 +33,37 @@ fun test_runtime_corelib_syntax_let() {
     )?
 }
 
+fun test_runtime_corelib_syntax_letrec() {
+    test_section("test_runtime_corelib_syntax_let")
+    debug_clear_all_objects()
+
+    let env = runtime_corelib_import(new_env())
+
+    test_expectation("it should bind values to local variables (no binds)")
+    assert_exprs_equal(
+        "(letrec () 1)",
+        "1",
+        env,
+    )?
+
+    test_expectation("expressions that are bound to local variables can access the variables that are associated to the expressions themselves")
+    assert_exprs_equal(
+        "(letrec ((f (lambda (n) (if (eqv? n 0) 0 (+ n (f (- n 1))))))) (f 4))",
+        "10",
+        env,
+    )?
+
+    test_expectation("expressions that are bound to local variables can access other local variables")
+    assert_exprs_equal(
+        "(letrec ((f (lambda (n) (if (eqv? n 0) 0 (+ n (g (- n 1))))))" +
+        "(g (lambda (n) (if (eqv? n 0) n (+ n (f (- n 1)))))))" +
+        "(f 4))",
+        "10",
+        env,
+    )?
+}
+
 main {
     test_runtime_corelib_syntax_let()?
+    test_runtime_corelib_syntax_letrec()?
 }
