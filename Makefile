@@ -4,6 +4,9 @@ TEST_BASH_FILES := $(patsubst src/%.ab, out/%.bash, $(TEST_AMBER_FILES))
 .PHONY: all
 all: out/ablisp $(TEST_BASH_FILES)
 
+.PHONY: docs
+docs: docs/corelib.md
+
 out/ablisp: src/*.ab
 	mkdir -p out
 	amber ./src/ablisp.ab ./out/ablisp
