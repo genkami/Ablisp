@@ -39,7 +39,41 @@ fun test_runtime_corelib_syntax_if() {
     )?
 }
 
+fun test_runtime_corelib_syntax_cond() {
+    test_section("test_runtime_corelib_syntax_cond")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+
+    test_expectation("when no clauses are given, it should return nil")
+    assert_exprs_equal(
+        "(cond)",
+        "nil",
+        env,
+    )?
+
+    test_expectation("it should evaluate the first clause whose condition is true")
+    assert_exprs_equal(
+        "(cond ((eqv? 0 1) 'a) ((eqv? 0 0) 'b) ((eqv? 1 1) 'c))",
+        "'b",
+        env,
+    )?
+
+    test_expectation("if none of the conditions are met, it should fallback to else clause")
+    assert_exprs_equal(
+        "(cond ((eqv? 0 1) 'a) ((eqv? 0 2) 'b) (else 'c))",
+        "'c",
+        env,
+    )?
+
+    test_expectation("else can be omitted")
+    assert_exprs_equal(
+        "(cond ((eqv? 0 1) 'a) ((eqv? 0 2) 'b))",
+        "nil",
+        env,
+    )?
+}
 
 main {
     test_runtime_corelib_syntax_if()?
+    test_runtime_corelib_syntax_cond()?
 }

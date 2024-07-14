@@ -9,6 +9,7 @@ import * from "./eval.ab"
 let _funcref_special_quote = ""
 let _funcref_special_set = ""
 let _funcref_special_if = ""
+let _funcref_special_cond = ""
 let _funcref_special_let = ""
 let _funcref_special_lambda = ""
 
@@ -214,6 +215,112 @@ native_track_next_funcall()
 special_if_impl()
 _funcref_special_if = native_get_last_funcref()
 
+pub fun runtime_corelib_syntax_special_cond_funcref(): Text {
+    return _funcref_special_cond
+}
+
+let _special_cond_desc = "Similar to `if`, but takes multiple clauses.
+
+```
+> (let ((a 3))
+    (cond
+      ((eqv? a 2) (echo \"foo\") \"a is 2\")
+      ((eqv? a 3) (echo \"bar\") \"a is 3\")
+      (else \"not sure\")))
+bar
+;=> \"a is 3\"
+```
+"
+
+fun special_cond_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    let clauses = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+    loop {
+        if object_is_nil(clauses) {
+            break
+        }
+        if not object_is_cons(clauses) {
+            native_return(new_err(code_syntax_error(), "invalid cond clause: " + object_to_string(clauses)))
+            return null
+        }
+        let clause = cons_car(clauses)
+        clauses = cons_cdr(clauses)
+        if not object_is_cons(clause) {
+            native_return(new_err(code_syntax_error(), "invalid cond clause: " + object_to_string(clause)))
+            return null
+        }
+        let cond_expr = cons_car(clause)
+        let cond_body = cons_cdr(clause)
+
+        let cond_met = false
+        if object_is_symbol(cond_expr) and symbol_name(cond_expr) == "else" {
+            cond_met = true
+        } else {
+            let cond_val_result = eval_expr(cond_expr, env, ctx)
+            if result_is_err(cond_val_result) {
+                native_return(cond_val_result)
+                return null
+            }
+            let cond_val = ok_val(cond_val_result)
+            if not object_is_nil(cond_val) {
+                cond_met = true
+            }
+        }
+
+        if not cond_met {
+            continue
+        }
+
+        let last_value = new_nil()
+        loop {
+            if object_is_nil(cond_body) {
+                break
+            }
+            if not object_is_cons(cond_body) {
+                native_return(new_err(code_syntax_error(), "invalid cond body: " + object_to_string(cond_body)))
+                return null
+            }
+            let expr = cons_car(cond_body)
+            cond_body = cons_cdr(cond_body)
+            let result_val = eval_expr(expr, env, ctx)
+            if result_is_err(result_val) {
+                native_return(result_val)
+                return null
+            }
+            last_value = ok_val(result_val)
+        }
+        native_return(new_ok(last_value))
+        return null
+    }
+
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+special_cond_impl()
+_funcref_special_cond = native_get_last_funcref()
+
 let _special_let_desc = "Binds values to local variables.
 
 ```
@@ -403,6 +510,7 @@ _funcref_special_lambda = native_get_last_funcref()
 pub fun runtime_corelib_syntax_import(env: Num): Num {
     env = env_define(env, new_symbol("quote"), new_special_form(_funcref_special_quote, _special_quote_desc))
     env = env_define(env, new_symbol("set!"), new_special_form(_funcref_special_set, _special_set_desc))
+    env = env_define(env, new_symbol("cond"), new_special_form(_funcref_special_cond, _special_cond_desc))
     env = env_define(env, new_symbol("if"), new_special_form(_funcref_special_if, _special_if_desc))
     env = env_define(env, new_symbol("let"), new_special_form(_funcref_special_let, _special_let_desc))
     env = env_define(env, new_symbol("lambda"), new_special_form(_funcref_special_lambda, _special_lambda_desc))
