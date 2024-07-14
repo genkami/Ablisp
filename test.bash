@@ -1,6 +1,17 @@
 #!/bin/bash -eu
 
 pids=()
+
+function cleanup {
+    for pid in ${pids[@]}; do
+        kill -TERM $pid
+    done
+}
+
+trap cleanup SIGINT
+trap cleanup SIGTERM
+trap cleanup SIGQUIT
+
 testcases=()
 results=()
 for testcase in ./out/*_test.bash; do

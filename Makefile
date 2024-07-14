@@ -2,7 +2,7 @@ TEST_AMBER_FILES := $(wildcard src/*_test.ab)
 TEST_BASH_FILES := $(patsubst src/%.ab, out/%.bash, $(TEST_AMBER_FILES))
 
 .PHONY: all
-all: out/ablisp
+all: out/ablisp $(TEST_BASH_FILES)
 
 out/ablisp: src/*.ab
 	mkdir -p out
