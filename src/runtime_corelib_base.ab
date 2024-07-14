@@ -18,6 +18,7 @@ let _funcref_cdr = ""
 let _funcref_set_car = ""
 let _funcref_set_cdr = ""
 let _funcref_special_set = ""
+let _funcref_special_if = ""
 
 pub fun runtime_corelib_base_echo_funcref(): Text {
     return _funcref_echo
@@ -616,6 +617,88 @@ native_track_next_funcall()
 special_set_impl()
 _funcref_special_set = native_get_last_funcref()
 
+pub fun runtime_corelib_base_special_if_funcref(): Text {
+    return _funcref_special_if
+}
+
+let _special_if_desc = "Branches the execution of a code based on a given condition.
+
+```
+> (if t 1 2)
+;=> 1
+> (if nil 1 2)
+;=> 2
+> (if (eqv? 1 2)
+      (error \"unreachable\"))
+;=> nil
+```
+"
+
+fun special_if_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+    let cond_expr = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let conseq_expr = cons_car(args)
+    args = cons_cdr(args)
+    let alt_expr = new_nil()
+    if object_is_cons(args) {
+        alt_expr = cons_car(args)
+        args = cons_cdr(args)
+    }
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+
+    let cond_result = eval_expr(cond_expr, env, ctx)
+    if result_is_err(cond_result) {
+        native_return(cond_result)
+        return null
+    }
+    let cond_val = ok_val(cond_result)
+    if object_is_nil(cond_val) {
+        let alt_result = eval_expr(alt_expr, env, ctx)
+        native_return(alt_result)
+        return null
+    }
+    let conseq_result = eval_expr(conseq_expr, env, ctx)
+    native_return(conseq_result)
+    return null
+}
+
+native_track_next_funcall()
+special_if_impl()
+_funcref_special_if = native_get_last_funcref()
+
 // TODO:
 // - eval
 // - help
@@ -639,5 +722,6 @@ pub fun runtime_corelib_base_import(env: Num): Num {
     env = env_define(env, new_symbol("set-car!"), new_native_fun(_funcref_set_car, _set_car_desc))
     env = env_define(env, new_symbol("set-cdr!"), new_native_fun(_funcref_set_cdr, _set_cdr_desc))
     env = env_define(env, new_symbol("set!"), new_special_form(_funcref_special_set, _special_set_desc))
+    env = env_define(env, new_symbol("if"), new_special_form(_funcref_special_if, _special_if_desc))
     return env
 }

@@ -1,0 +1,46 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./runtime_corelib.ab"
+import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
+
+fun test_runtime_corelib_base_if() {
+    test_section("test_runtime_corelib_base_if")
+
+    test_expectation("it should return the consequence if the condition is non-nil")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal(
+        "(if (eqv? 1 1) \"ok\" (error \"unreachable\"))",
+        "\"ok\"",
+        env,
+    )?
+    assert_exprs_equal(
+        "(if 0 \"ok\" (error \"unreachable\"))",
+        "\"ok\"",
+        env,
+    )?
+
+    test_expectation("it should return the alternative if the condition is nil")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal(
+        "(if (eqv? 1 2) (error \"unreachable\") 999)",
+        "999",
+        env,
+    )?
+
+    test_expectation("alternative can be omitted")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal(
+        "(if (eqv? 1 2) (error \"unreachable\"))",
+        "nil",
+        env,
+    )?
+}
+
+main {
+    test_runtime_corelib_base_if()?
+}
