@@ -89,7 +89,7 @@ Updates the second element of a cons-cell.
 
 ```
 > (let ((pair (cons 1 2)))
-      (set-car! pair 999)
+      (set-cdr! pair 999)
       pair)
 ;=> (1 . 999)
 ```
@@ -159,7 +159,6 @@ Returns `t` if the arguments are structually equal; otherwise returns `nil`.
 > (let ((pair (cons 1 2)))
     (equal? pair pair))
 ;=> t
-```
 ```
 
 ## Function: `eqv?`
