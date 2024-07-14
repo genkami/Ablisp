@@ -19,6 +19,7 @@ let _funcref_set_car = ""
 let _funcref_set_cdr = ""
 let _funcref_special_set = ""
 let _funcref_special_if = ""
+let _funcref_special_let = ""
 
 pub fun runtime_corelib_base_echo_funcref(): Text {
     return _funcref_echo
@@ -699,15 +700,123 @@ native_track_next_funcall()
 special_if_impl()
 _funcref_special_if = native_get_last_funcref()
 
+let _special_let_desc = "Binds values to local variables.
+
+```
+> (let ((a 1)
+        (b 2))
+      (+ a b))
+;=> 3
+```
+"
+
+fun special_let_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+
+    let var_binds = cons_car(args)
+    let body = cons_cdr(args)
+    let body_env = env
+    loop {
+        if object_is_nil(var_binds) {
+            break
+        }
+        if not object_is_cons(var_binds) {
+            native_return(new_err(code_invalid_argument(), "invalid variable binding: " + object_to_string(var_binds)))
+            return null
+        }
+        let bind = cons_car(var_binds)
+        var_binds = cons_cdr(var_binds)
+        if not object_is_cons(bind) {
+            native_return(new_err(code_invalid_argument(), "invalid variable binding: " + object_to_string(bind)))
+            return null
+        }
+        let var_name = cons_car(bind)
+        let var_expr_and_rest = cons_cdr(bind)
+        if not object_is_symbol(var_name) {
+            native_return(new_err(code_invalid_argument(), "invalid variable name: " + object_to_string(var_name)))
+            return null
+        }
+        if not object_is_cons(var_expr_and_rest) {
+            native_return(new_err(code_invalid_argument(), "invalid variable binding: " + object_to_string(bind)))
+            return null
+        }
+        let var_expr = cons_car(var_expr_and_rest)
+        if not object_is_nil(cons_cdr(var_expr_and_rest)) {
+            native_return(new_err(code_invalid_argument(), "invalid variable binding: " + object_to_string(bind)))
+            return null
+        }
+        
+        let var_val_result = eval_expr(var_expr, env, ctx)
+        if result_is_err(var_val_result) {
+            native_return(var_val_result)
+            return null
+        }
+        let var_val = ok_val(var_val_result)
+        body_env = env_define(body_env, var_name, var_val)
+    }
+
+    let last_val = new_nil()
+    loop {
+        if object_is_nil(body) {
+            break
+        }
+        if not object_is_cons(body) {
+            native_return(new_err(code_invalid_argument(), "invalid let body: " + object_to_string(body)))
+            return null
+        }
+        let expr = cons_car(body)
+        body = cons_cdr(body)
+
+        let val_result = eval_expr(expr, body_env, ctx)
+        if result_is_err(val_result) {
+            native_return(val_result)
+            return null
+        }
+        last_val = ok_val(val_result)
+    }
+    native_return(new_ok(last_val))
+    return null
+}
+
+native_track_next_funcall()
+special_let_impl()
+_funcref_special_let = native_get_last_funcref()
+
+
 // TODO:
 // - eval
 // - help
-// - if
-// - let/letrec
+// - letrec
 // - and/or
 // - catch
 // - object->string
 // - begin
+// - lambda
 
 pub fun runtime_corelib_base_import(env: Num): Num {
     env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo, _echo_desc))
@@ -723,5 +832,6 @@ pub fun runtime_corelib_base_import(env: Num): Num {
     env = env_define(env, new_symbol("set-cdr!"), new_native_fun(_funcref_set_cdr, _set_cdr_desc))
     env = env_define(env, new_symbol("set!"), new_special_form(_funcref_special_set, _special_set_desc))
     env = env_define(env, new_symbol("if"), new_special_form(_funcref_special_if, _special_if_desc))
+    env = env_define(env, new_symbol("let"), new_special_form(_funcref_special_let, _special_let_desc))
     return env
 }

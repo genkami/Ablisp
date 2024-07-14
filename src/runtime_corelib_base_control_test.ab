@@ -7,9 +7,9 @@ import * from "./eval_test_utils.ab"
 
 fun test_runtime_corelib_base_if() {
     test_section("test_runtime_corelib_base_if")
+    debug_clear_all_objects()
 
     test_expectation("it should return the consequence if the condition is non-nil")
-    debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
     assert_exprs_equal(
         "(if (eqv? 1 1) \"ok\" (error \"unreachable\"))",
@@ -23,7 +23,6 @@ fun test_runtime_corelib_base_if() {
     )?
 
     test_expectation("it should return the alternative if the condition is nil")
-    debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
     assert_exprs_equal(
         "(if (eqv? 1 2) (error \"unreachable\") 999)",
@@ -32,7 +31,6 @@ fun test_runtime_corelib_base_if() {
     )?
 
     test_expectation("alternative can be omitted")
-    debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
     assert_exprs_equal(
         "(if (eqv? 1 2) (error \"unreachable\"))",
@@ -41,6 +39,30 @@ fun test_runtime_corelib_base_if() {
     )?
 }
 
+fun test_runtime_corelib_base_let() {
+    test_section("test_runtime_corelib_base_let")
+    debug_clear_all_objects()
+
+    test_expectation("it should bind values to local variables")
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal(
+        "(let () 1)",
+        "1",
+        env,
+    )?
+    assert_exprs_equal(
+        "(let ((a 123)) a)",
+        "123",
+        env,
+    )?
+    assert_exprs_equal(
+        "(let ((a 2) (b 3)) (+ a b))",
+        "5",
+        env,
+    )?
+}
+
 main {
     test_runtime_corelib_base_if()?
+    test_runtime_corelib_base_let()?
 }
