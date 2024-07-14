@@ -100,55 +100,6 @@ fun test_object_new() {
     assert(ptr5_reused, "ptr5 not reused")?
 }
 
-fun test_object_to_string() {
-    test_section("test_object_to_string")
-
-    test_expectation("it should convert a list of objects into a string")
-    debug_clear_all_objects()
-    let obj = new_nil()
-    obj = new_cons(new_nil(), obj)
-    obj = new_cons(new_t(), obj)
-    obj = new_cons(new_text("2"), obj)
-    obj = new_cons(new_num(1), obj)
-    assert_equal_text(object_to_string(obj), "(1 \"2\" t nil)")?
-
-    test_expectation("it should convert a cons-cell whose cdr is not nil")
-    debug_clear_all_objects()
-    let obj = new_num(3)
-    obj = new_cons(new_num(2), obj)
-    obj = new_cons(new_num(1), obj)
-    assert_equal_text(object_to_string(obj), "(1 2 . 3)")?
-
-    test_expectation("it should escape special characters")
-    debug_clear_all_objects()
-    let obj = new_text("a\\b\"c\nd")
-    let bs = backslash(1)
-    let want = "\"a" + bs + bs + "b" + bs + "\"c" + bs + "nd\""
-    assert_equal_text(object_to_string(obj), want)?
-
-    test_expectation("it should only show the name of a native function")
-    debug_clear_all_objects()
-    let obj = new_native_fun("foo", "long description")
-    assert_equal_text(object_to_string(obj), "<#:native foo>")?
-
-    test_expectation("it should only show the name of a special form")
-    debug_clear_all_objects()
-    let obj = new_special_form("foo", "long description")
-    assert_equal_text(object_to_string(obj), "<#:special foo>")?
-
-    test_expectation("it should show a single quote instead of (quote)")
-    debug_clear_all_objects()
-    let obj = new_nil()
-    obj = new_cons(new_symbol("foo"), obj)
-    obj = new_cons(new_symbol("quote"), obj)
-    assert_equal_text(object_to_string(obj), "'foo")?
-}
-
-pub fun test_object() {
-    test_object_new()?
-    test_object_to_string()?
-}
-
 main {
-    test_object()?
+    test_object_new()?
 }

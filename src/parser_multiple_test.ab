@@ -1,0 +1,41 @@
+import * from "./char.ab"
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./parser.ab"
+import * from "./testing.ab"
+
+fun test_parse_sexp_multiple_objects() {
+    test_section("test_parse_sexp_multiple_objects")
+    debug_clear_all_objects()
+
+    init_parser("1 \"2\" (3 t)  ")
+
+    test_expectation("it should parse the next object #1")
+    let val = parse_sexp()
+    let want = new_num(1)
+    assert_ok_object_eqv(val, want)?
+    
+    test_expectation("it should parse the next object #2")
+    let val = parse_sexp()
+    let want = new_text("2")
+    assert_ok_object_eqv(val, want)?
+    
+    test_expectation("it should parse the next object #3")
+    let val = parse_sexp()
+    let want = new_nil()
+    want = new_cons(new_t(), want)
+    want = new_cons(new_num(3), want)
+    assert_ok_object_equal(val, want)?
+
+    test_expectation("it should return stop_iteration when reaching EOF")
+    let val = parse_sexp()
+    assert_err_code(val, code_stop_iteration())?
+
+    test_expectation("once it returned stop_iteration, succeeding calls to it should always return stop_iteration")
+    let val = parse_sexp()
+    assert_err_code(val, code_stop_iteration())?
+}
+
+main {
+    test_parse_sexp_multiple_objects()?
+}

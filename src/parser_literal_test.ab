@@ -1,0 +1,111 @@
+import * from "./char.ab"
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./parser.ab"
+import * from "./testing.ab"
+
+fun test_parse_sexp_num() {
+    test_section("test_parse_sexp_num")
+    debug_clear_all_objects()
+
+    test_expectation("it should parse a single digit")
+    init_parser("1")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_num(1))?
+    
+    test_expectation("it should parse a sequence of digits")
+    init_parser("3535")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_num(3535))?
+
+    test_expectation("it should parse a number with + sign")
+    init_parser("+110")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_num(110))?
+    
+    test_expectation("it should parse a number with - sign")
+    init_parser("-445")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_num(-445))?
+
+    test_expectation("it ignores spaces before a number")
+    init_parser("   \t\n  810")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_num(810))?
+}
+
+fun test_parse_sexp_text() {
+    test_section("test_parse_sexp_text")
+    debug_clear_all_objects()
+
+    test_expectation("it should parse an empty text")
+    init_parser("\"\"")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_text(""))?
+
+    test_expectation("it should parse a text which consists of ASCII characters")
+    init_parser("\"abc123!@#\"")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_text("abc123!@#"))?
+
+    test_expectation("it should parse a text with escape sequence")
+    init_parser("\"abc\\ndef" + backslash(3) + "\"ghi\"")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_text("abc\ndef" + backslash(1) + "\"ghi"))?
+
+    test_expectation("it should parse a unicode text")
+    init_parser("\"こんにちは\"")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_text("こんにちは"))?
+
+    test_expectation("it should reject an unsupported escape sequence")
+    init_parser("\"" + backslash(1) + "q\"")
+    let val = parse_sexp()
+    assert_err_code(val, code_parse_error())?
+
+    test_expectation("it should ignore spaces before a text")
+    init_parser("\n\t  \n\"foo\"")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_text("foo"))?
+}
+
+fun test_parse_sexp_symlike() {
+    test_section("test_parse_sexp_symlike")
+    debug_clear_all_objects()
+
+    test_expectation("it should parse t")
+    init_parser("t")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_t())?
+
+    test_expectation("it should parse nil")
+    init_parser("nil")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_nil())?
+
+    test_expectation("it should parse a symbol consisting of alphabets")
+    init_parser("foo")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_symbol("foo"))?
+    
+    test_expectation("it should parse a symbol consisting of alphabets and digits")
+    init_parser("f00")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_symbol("f00"))?
+    
+    test_expectation("it should parse a symbol consisting of alphabets and symbols")
+    init_parser("^set-car!")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_symbol("^set-car!"))?
+
+    test_expectation("it should parse a symbol consisting of symbols")
+    init_parser("+")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_symbol("+"))?
+}
+
+main {
+    test_parse_sexp_num()?
+    test_parse_sexp_text()?
+    test_parse_sexp_symlike()?
+}

@@ -1,0 +1,26 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./runtime_corelib.ab"
+import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
+
+fun test_runtime_corelib_base_equal() {
+    test_section("test_runtime_corelib_base_equal")
+    test_expectation("it should return whether the given objects are structually equal")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    let pair = new_num(2)
+    pair = new_cons(new_num(1), pair)
+    env = env_define(env, new_symbol("pair"), pair)
+    assert_exprs_equal("(equal? 1 1)", "t", env)?
+    assert_exprs_equal("(equal? 1 2)", "nil", env)?
+    assert_exprs_equal("(equal? \"foo\" \"foo\")", "t", env)?
+    assert_exprs_equal("(equal? \"foo\" 'foo)", "nil", env)?
+    assert_exprs_equal("(equal? (cons 1 2) (cons 1 2))", "t", env)?
+    assert_exprs_equal("(equal? pair pair)", "t", env)?
+}
+
+main {
+    test_runtime_corelib_base_equal()?
+}

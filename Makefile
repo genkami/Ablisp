@@ -1,18 +1,21 @@
+TEST_AMBER_FILES := $(wildcard src/*_test.ab)
+TEST_BASH_FILES := $(patsubst src/%.ab, out/%.bash, $(TEST_AMBER_FILES))
+
 .PHONY: all
-all: out/ablisp out/test
+all: out/ablisp
 
 out/ablisp: src/*.ab
 	mkdir -p out
 	amber ./src/ablisp.ab ./out/ablisp
 
-out/test: src/*.ab
+out/%_test.bash: src/%_test.ab
 	mkdir -p out
-	amber ./src/test.ab ./out/test
+	amber $< $@
 
 .PHONY: clean
 clean:
 	rm -rf out
 
 .PHONY: test
-test: out/test
-	./out/test
+test: $(TEST_BASH_FILES)
+	./test.bash

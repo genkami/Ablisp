@@ -1,0 +1,60 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./native.ab"
+import * from "./eval.ab"
+import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
+
+fun test_eval_literal() {
+    test_section("test_eval_literal")
+
+    test_expectation("when the expr is num, it should return the num")
+    debug_clear_all_objects()
+    let env = new_env()
+    let got = must_parse_and_eval("123", env)?
+    assert_object_equal(got, new_num(123))?
+
+    test_expectation("when the expr is text, it should return the text")
+    debug_clear_all_objects()
+    let env = new_env()
+    let got = must_parse_and_eval("\"foo\"", env)?
+    assert_object_equal(got, new_text("foo"))?
+
+    test_expectation("when the expr is t, it should return t")
+    debug_clear_all_objects()
+    let env = new_env()
+    let got = must_parse_and_eval("t", env)?
+    assert_object_equal(got, new_t())?
+
+    test_expectation("when the expr is nil, it should return nil")
+    debug_clear_all_objects()
+    let env = new_env()
+    let got = must_parse_and_eval("nil", env)?
+    assert_object_equal(got, new_nil())?
+}
+
+fun test_eval_var() {
+    test_section("test_eval_var")
+
+    test_expectation("it should return the value associated to a variable")
+    debug_clear_all_objects()
+    let env = new_env()
+    env = env_define(env, new_symbol("foo"), new_num(123))
+    let got = must_parse_and_eval("foo", env)?
+    assert_object_equal(got, new_num(123))?
+
+    test_expectation("it should return undefined_variable when there is no such variable")
+    debug_clear_all_objects()
+    let env = new_env()
+    env = env_define(env, new_symbol("foo"), new_num(123))
+    let v = env_lookup(env, new_symbol("bar"))
+    assert_err_code(v, code_undefined_variable())?
+    let got = parse_and_eval("bar", env)?
+    assert_err_code(got, code_undefined_variable())?
+}
+
+main {
+    test_eval_literal()?
+    test_eval_var()?
+}

@@ -1,0 +1,20 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./runtime_corelib.ab"
+import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
+
+fun test_runtime_corelib_math_add() {
+    test_section("test_runtime_corelib_math_add")
+    test_expectation("it should add arguments")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal("(+)", "0", env)?
+    assert_exprs_equal("(+ 1)", "1", env)?
+    assert_exprs_equal("(+ 1 2 3)", "6", env)?
+}
+
+main {
+    test_runtime_corelib_math_add()?
+}

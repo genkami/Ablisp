@@ -5,16 +5,6 @@ import * from "./runtime_corelib.ab"
 import * from "./testing.ab"
 import * from "./eval_test_utils.ab"
 
-fun test_runtime_corelib_math_add() {
-    test_section("test_runtime_corelib_math_add")
-    test_expectation("it should add arguments")
-    debug_clear_all_objects()
-    let env = runtime_corelib_import(new_env())
-    assert_exprs_equal("(+)", "0", env)?
-    assert_exprs_equal("(+ 1)", "1", env)?
-    assert_exprs_equal("(+ 1 2 3)", "6", env)?
-}
-
 fun test_runtime_corelib_math_sub() {
     test_section("test_runtime_corelib_math_sub")
     test_expectation("it should subtract arguments")
@@ -26,11 +16,6 @@ fun test_runtime_corelib_math_sub() {
     assert_exprs_equal("(- 3 2 1)", "0", env)?
 }
 
-pub fun test_runtime_corelib_math() {
-    test_runtime_corelib_math_add()?
-    test_runtime_corelib_math_sub()?
-}
-
 main {
-    test_runtime_corelib_math()?
+    test_runtime_corelib_math_sub()?
 }

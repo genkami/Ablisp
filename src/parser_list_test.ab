@@ -1,0 +1,83 @@
+import * from "./char.ab"
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./parser.ab"
+import * from "./testing.ab"
+
+pub fun test_parse_sexp_list() {
+    test_section("test_parse_sexp_list")
+    debug_clear_all_objects()
+
+    test_expectation("it should parse an empty list")
+    init_parser("()")
+    let val = parse_sexp()
+    assert_ok_object_eqv(val, new_nil())?
+
+    test_expectation("it should parse a singleton")
+    init_parser("(1)")
+    let val = parse_sexp()
+    let want = new_nil()
+    want = new_cons(new_num(1), want)
+    assert_ok_object_equal(val, want)?
+
+    test_expectation("it should parse a list of multiple elements")
+    init_parser("(1 \"b\" t nil foo)")
+    let val = parse_sexp()
+    let want = new_nil()
+    want = new_cons(new_symbol("foo"), want)
+    want = new_cons(new_nil(), want)
+    want = new_cons(new_t(), want)
+    want = new_cons(new_text("b"), want)
+    want = new_cons(new_num(1), want)
+    assert_ok_object_equal(val, want)?
+
+    test_expectation("it should parse a nested list")
+    init_parser("(1 (2 3) (\"4\" \"5\" \"6\") (t nil) (v7 (v8 v9)))")
+    let val = parse_sexp()
+    let want = new_nil()
+    let elem = new_nil()
+    elem = new_cons(new_symbol("v9"), elem)
+    elem = new_cons(new_symbol("v8"), elem)
+    elem = new_cons(elem, new_nil())
+    elem = new_cons(new_symbol("v7"), elem)
+    want = new_cons(elem, want)
+    elem = new_nil()
+    elem = new_cons(new_nil(), elem)
+    elem = new_cons(new_t(), elem)
+    want = new_cons(elem, want)
+    elem = new_nil()
+    elem = new_cons(new_text("6"), elem)
+    elem = new_cons(new_text("5"), elem)
+    elem = new_cons(new_text("4"), elem)
+    want = new_cons(elem, want)
+    elem = new_nil()
+    elem = new_cons(new_num(3), elem)
+    elem = new_cons(new_num(2), elem)
+    want = new_cons(elem, want)
+    want = new_cons(new_num(1), want)
+    assert_ok_object_equal(val, want)?
+
+    test_expectation("it should parse a non-list cons-cell")
+    init_parser("(1 (2 . 3) . 4)")
+    let val = parse_sexp()
+    let want = new_num(4)
+    let elem = new_num(3)
+    elem = new_cons(new_num(2), elem)
+    want = new_cons(elem, want)
+    want = new_cons(new_num(1), want)
+    assert_ok_object_equal(val, want)?
+
+    test_expectation("it should return parse_error when the cdr is missing")
+    init_parser("(1 . )")
+    let val = parse_sexp()
+    assert_err_code(val, code_parse_error())?
+
+    test_expectation("it should return parse_error when the car is missing")
+    init_parser("( . 2)")
+    let val = parse_sexp()
+    assert_err_code(val, code_parse_error())?
+}
+
+main {
+    test_parse_sexp_list()?
+}
