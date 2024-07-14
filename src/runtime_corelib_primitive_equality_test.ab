@@ -5,8 +5,8 @@ import * from "./runtime_corelib.ab"
 import * from "./testing.ab"
 import * from "./eval_test_utils.ab"
 
-fun test_runtime_corelib_base_eqv() {
-    test_section("test_runtime_corelib_base_eqv")
+fun test_runtime_corelib_primitive_eqv() {
+    test_section("test_runtime_corelib_primitive_eqv")
     test_expectation("it should return whether the given objects are the same")
     debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
@@ -21,8 +21,8 @@ fun test_runtime_corelib_base_eqv() {
     assert_exprs_equal("(eqv? pair pair)", "t", env)?
 }
 
-fun test_runtime_corelib_base_equal() {
-    test_section("test_runtime_corelib_base_equal")
+fun test_runtime_corelib_primitive_equal() {
+    test_section("test_runtime_corelib_primitive_equal")
     test_expectation("it should return whether the given objects are structually equal")
     debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
@@ -38,6 +38,6 @@ fun test_runtime_corelib_base_equal() {
 }
 
 main {
-    test_runtime_corelib_base_eqv()?
-    test_runtime_corelib_base_equal()?
+    test_runtime_corelib_primitive_eqv()?
+    test_runtime_corelib_primitive_equal()?
 }

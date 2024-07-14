@@ -5,8 +5,8 @@ import * from "./runtime_corelib.ab"
 import * from "./testing.ab"
 import * from "./eval_test_utils.ab"
 
-fun test_runtime_corelib_base_cons() {
-    test_section("test_runtime_corelib_base_cons")
+fun test_runtime_corelib_primitive_cons() {
+    test_section("test_runtime_corelib_primitive_cons")
     test_expectation("it should make a cons-cell")
     debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
@@ -15,24 +15,24 @@ fun test_runtime_corelib_base_cons() {
     assert_exprs_equal("(cons \"a\" 123)", "pair", env)?
 }
 
-fun test_runtime_corelib_base_car() {
-    test_section("test_runtime_corelib_base_car")
+fun test_runtime_corelib_primitive_car() {
+    test_section("test_runtime_corelib_primitive_car")
     test_expectation("it should return the first element of a cons-cell")
     debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
     assert_exprs_equal("(car (cons 111 222))", "111", env)?
 }
 
-fun test_runtime_corelib_base_cdr() {
-    test_section("test_runtime_corelib_base_cdr")
+fun test_runtime_corelib_primitive_cdr() {
+    test_section("test_runtime_corelib_primitive_cdr")
     test_expectation("it should return the second element of a cons-cell")
     debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
     assert_exprs_equal("(cdr (cons 111 222))", "222", env)?
 }
 
-fun test_runtime_corelib_base_set_car() {
-    test_section("test_runtime_corelib_base_set_car")
+fun test_runtime_corelib_primitive_set_car() {
+    test_section("test_runtime_corelib_primitive_set_car")
     test_expectation("it should update the first element of a cons-cell")
     debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
@@ -44,8 +44,8 @@ fun test_runtime_corelib_base_set_car() {
     assert_object_equal(pair, want)?
 }
 
-fun test_runtime_corelib_base_set_cdr() {
-    test_section("test_runtime_corelib_base_set_cdr")
+fun test_runtime_corelib_primitive_set_cdr() {
+    test_section("test_runtime_corelib_primitive_set_cdr")
     test_expectation("it should update the second element of a cons-cell")
     debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
@@ -57,8 +57,8 @@ fun test_runtime_corelib_base_set_cdr() {
     assert_object_equal(pair, want)?
 }
 
-fun test_runtime_corelib_base_set() {
-    test_section("test_runtime_corelib_base_set")
+fun test_runtime_corelib_primitive_set() {
+    test_section("test_runtime_corelib_primitive_set")
     test_expectation("it should update the value of a variable")
     debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
@@ -69,10 +69,10 @@ fun test_runtime_corelib_base_set() {
 }
 
 main {
-    test_runtime_corelib_base_cons()?
-    test_runtime_corelib_base_car()?
-    test_runtime_corelib_base_cdr()?
-    test_runtime_corelib_base_set_car()?
-    test_runtime_corelib_base_set_cdr()?
-    test_runtime_corelib_base_set()?
+    test_runtime_corelib_primitive_cons()?
+    test_runtime_corelib_primitive_car()?
+    test_runtime_corelib_primitive_cdr()?
+    test_runtime_corelib_primitive_set_car()?
+    test_runtime_corelib_primitive_set_cdr()?
+    test_runtime_corelib_primitive_set()?
 }

@@ -3,15 +3,21 @@ import * from "./object.ab"
 import * from "./env.ab"
 import * from "./native.ab"
 import * from "./eval.ab"
-import * from "./runtime_corelib_base.ab"
+import * from "./runtime_corelib_syntax.ab"
+import * from "./runtime_corelib_primitive.ab"
 import * from "./runtime_corelib_math.ab"
 import * from "./runtime_corelib_list.ab"
 import * from "./runtime_corelib_text.ab"
+import * from "./runtime_corelib_error.ab"
+import * from "./runtime_corelib_utils.ab"
 
 pub fun runtime_corelib_import(env: Num): Num {
-    env = runtime_corelib_base_import(env)
+    env = runtime_corelib_utils_import(env)
+    env = runtime_corelib_error_import(env)
     env = runtime_corelib_math_import(env)
     env = runtime_corelib_list_import(env)
     env = runtime_corelib_text_import(env)
+    env = runtime_corelib_primitive_import(env)
+    env = runtime_corelib_syntax_import(env)
     return env
 }

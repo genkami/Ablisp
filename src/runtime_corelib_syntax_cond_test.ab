@@ -5,8 +5,8 @@ import * from "./runtime_corelib.ab"
 import * from "./testing.ab"
 import * from "./eval_test_utils.ab"
 
-fun test_runtime_corelib_base_if() {
-    test_section("test_runtime_corelib_base_if")
+fun test_runtime_corelib_syntax_if() {
+    test_section("test_runtime_corelib_syntax_if")
     debug_clear_all_objects()
 
     test_expectation("it should return the consequence if the condition is non-nil")
@@ -39,8 +39,8 @@ fun test_runtime_corelib_base_if() {
     )?
 }
 
-fun test_runtime_corelib_base_let() {
-    test_section("test_runtime_corelib_base_let")
+fun test_runtime_corelib_syntax_let() {
+    test_section("test_runtime_corelib_syntax_let")
     debug_clear_all_objects()
 
     let env = runtime_corelib_import(new_env())
@@ -67,8 +67,8 @@ fun test_runtime_corelib_base_let() {
     )?
 }
 
-fun test_runtime_corelib_base_lambda() {
-    test_section("test_runtime_corelib_base_lambda")
+fun test_runtime_corelib_syntax_lambda() {
+    test_section("test_runtime_corelib_syntax_lambda")
     debug_clear_all_objects()
 
     let env = runtime_corelib_import(new_env())
@@ -96,7 +96,7 @@ fun test_runtime_corelib_base_lambda() {
 }
 
 main {
-    test_runtime_corelib_base_if()?
-    test_runtime_corelib_base_let()?
-    test_runtime_corelib_base_lambda()?
+    test_runtime_corelib_syntax_if()?
+    test_runtime_corelib_syntax_let()?
+    test_runtime_corelib_syntax_lambda()?
 }

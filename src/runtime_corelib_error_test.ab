@@ -1,0 +1,19 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./runtime_corelib.ab"
+import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
+
+fun test_runtime_corelib_base_error() {
+    test_section("test_runtime_corelib_base_error")
+    test_expectation("it should raise an error")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_expr_raises_err("(error \"foo\")", code_user_error(), env)?
+    assert_expr_raises_err("(error \"my_error\" \"foo\")", "my_error", env)?
+}
+
+main {
+    test_runtime_corelib_base_error()? 
+}

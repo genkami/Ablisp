@@ -1,0 +1,410 @@
+// Module syntax provides basic syntax for Ablisp.
+
+import * from "./native.ab"
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./eval.ab"
+
+let _funcref_special_quote = ""
+let _funcref_special_set = ""
+let _funcref_special_if = ""
+let _funcref_special_let = ""
+let _funcref_special_lambda = ""
+
+pub fun runtime_corelib_syntax_special_quote_funcref(): Text {
+    return _funcref_special_quote
+}
+
+let _special_quote_desc = "Returns an unevaluated argument.
+
+```
+> (quote 3)
+;=> 3
+> (quote foo)
+;=> foo
+> (quote (a b c))
+;=> (a b c)
+> '(a b c)   ; shorthand for quote
+;=> (a b c)
+```
+"
+
+fun special_quote_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let content = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    native_return(new_ok(content))
+    return null
+}
+
+native_track_next_funcall()
+special_quote_impl()
+_funcref_special_quote = native_get_last_funcref()
+
+pub fun runtime_corelib_syntax_special_set_funcref(): Text {
+    return _funcref_special_set
+}
+
+let _special_set_desc = "Updates the value of a variable.
+
+```
+> (let ((a 1)
+        (b 2))
+      (set! a 999)
+      (cons a b))
+;=> (999 . 2)
+```
+"
+
+fun special_set_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let var_name = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_symbol(var_name) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let value = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let result = env_set(env, var_name, value)
+    if result_is_err(result) {
+        native_return(result)
+        return null
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+special_set_impl()
+_funcref_special_set = native_get_last_funcref()
+
+pub fun runtime_corelib_syntax_special_if_funcref(): Text {
+    return _funcref_special_if
+}
+
+let _special_if_desc = "Branches the execution of a code based on a given condition.
+
+```
+> (if t 1 2)
+;=> 1
+> (if nil 1 2)
+;=> 2
+> (if (eqv? 1 2)
+      (error \"unreachable\"))
+;=> nil
+```
+"
+
+fun special_if_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+    let cond_expr = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let conseq_expr = cons_car(args)
+    args = cons_cdr(args)
+    let alt_expr = new_nil()
+    if object_is_cons(args) {
+        alt_expr = cons_car(args)
+        args = cons_cdr(args)
+    }
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+
+    let cond_result = eval_expr(cond_expr, env, ctx)
+    if result_is_err(cond_result) {
+        native_return(cond_result)
+        return null
+    }
+    let cond_val = ok_val(cond_result)
+    if object_is_nil(cond_val) {
+        let alt_result = eval_expr(alt_expr, env, ctx)
+        native_return(alt_result)
+        return null
+    }
+    let conseq_result = eval_expr(conseq_expr, env, ctx)
+    native_return(conseq_result)
+    return null
+}
+
+native_track_next_funcall()
+special_if_impl()
+_funcref_special_if = native_get_last_funcref()
+
+let _special_let_desc = "Binds values to local variables.
+
+```
+> (let ((a 1)
+        (b 2))
+      (+ a b))
+;=> 3
+```
+"
+
+fun special_let_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+
+    let var_binds = cons_car(args)
+    let body = cons_cdr(args)
+    let body_env = env
+    loop {
+        if object_is_nil(var_binds) {
+            break
+        }
+        if not object_is_cons(var_binds) {
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(var_binds)))
+            return null
+        }
+        let bind = cons_car(var_binds)
+        var_binds = cons_cdr(var_binds)
+        if not object_is_cons(bind) {
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(bind)))
+            return null
+        }
+        let var_name = cons_car(bind)
+        let var_expr_and_rest = cons_cdr(bind)
+        if not object_is_symbol(var_name) {
+            native_return(new_err(code_syntax_error(), "invalid variable name: " + object_to_string(var_name)))
+            return null
+        }
+        if not object_is_cons(var_expr_and_rest) {
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(bind)))
+            return null
+        }
+        let var_expr = cons_car(var_expr_and_rest)
+        if not object_is_nil(cons_cdr(var_expr_and_rest)) {
+            native_return(new_err(code_syntax_error(), "invalid variable binding: " + object_to_string(bind)))
+            return null
+        }
+        
+        let var_val_result = eval_expr(var_expr, env, ctx)
+        if result_is_err(var_val_result) {
+            native_return(var_val_result)
+            return null
+        }
+        let var_val = ok_val(var_val_result)
+        body_env = env_define(body_env, var_name, var_val)
+    }
+
+    let last_val = new_nil()
+    loop {
+        if object_is_nil(body) {
+            break
+        }
+        if not object_is_cons(body) {
+            native_return(new_err(code_syntax_error(), "invalid let body: " + object_to_string(body)))
+            return null
+        }
+        let expr = cons_car(body)
+        body = cons_cdr(body)
+
+        let val_result = eval_expr(expr, body_env, ctx)
+        if result_is_err(val_result) {
+            native_return(val_result)
+            return null
+        }
+        last_val = ok_val(val_result)
+    }
+    native_return(new_ok(last_val))
+    return null
+}
+
+native_track_next_funcall()
+special_let_impl()
+_funcref_special_let = native_get_last_funcref()
+
+pub fun runtime_corelib_syntax_special_lambda_funcref(): Text {
+    return _funcref_special_lambda
+}
+
+let _special_lambda_desc = "Makes an anonymous function.
+
+```
+> ((lambda (a b)
+       (echo \"Calculating...\")
+       (+ a b))
+   1 2)
+Calculating...
+;=> 3
+```
+"
+
+fun special_lambda_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+    let params = cons_car(args)
+    let body = cons_cdr(args)
+
+    let iter = params
+    loop {
+        if object_is_nil(iter) {
+            break
+        }
+        if not object_is_cons(iter) {
+            native_return(new_err(code_syntax_error(), "invalid parameter list: " + object_to_string(params)))
+            return null
+        }
+        let param = cons_car(iter)
+        iter = cons_cdr(iter)
+        if not object_is_symbol(param) {
+            native_return(new_err(code_syntax_error(), "invalid parameter list: " + object_to_string(params)))
+            return null
+        }
+    }
+    let name = ctx + "/<lambda>"
+    let name = new_text(name)
+    let cl = new_closure(name, params, body, env)
+    native_return(new_ok(cl))
+    return null
+}
+
+native_track_next_funcall()
+special_lambda_impl()
+_funcref_special_lambda = native_get_last_funcref()
+
+// TODO:
+// - letrec
+// - cond
+// - and/or
+// - begin
+
+pub fun runtime_corelib_syntax_import(env: Num): Num {
+    env = env_define(env, new_symbol("quote"), new_special_form(_funcref_special_quote, _special_quote_desc))
+    env = env_define(env, new_symbol("set!"), new_special_form(_funcref_special_set, _special_set_desc))
+    env = env_define(env, new_symbol("if"), new_special_form(_funcref_special_if, _special_if_desc))
+    env = env_define(env, new_symbol("let"), new_special_form(_funcref_special_let, _special_let_desc))
+    env = env_define(env, new_symbol("lambda"), new_special_form(_funcref_special_lambda, _special_lambda_desc))
+    return env
+}
