@@ -1,0 +1,38 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./runtime_corelib.ab"
+import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
+
+fun test_runtime_corelib_syntax_let() {
+    test_section("test_runtime_corelib_syntax_let")
+    debug_clear_all_objects()
+
+    let env = runtime_corelib_import(new_env())
+
+    test_expectation("it should bind values to local variables (no binds)")
+    assert_exprs_equal(
+        "(let () 1)",
+        "1",
+        env,
+    )?
+
+    test_expectation("it should bind values to local variables (single bind)")
+    assert_exprs_equal(
+        "(let ((a 123)) a)",
+        "123",
+        env,
+    )?
+
+    test_expectation("it should bind values to local variables (many binds)")
+    assert_exprs_equal(
+        "(let ((a 2) (b 3)) (+ a b))",
+        "5",
+        env,
+    )?
+}
+
+main {
+    test_runtime_corelib_syntax_let()?
+}

@@ -39,64 +39,7 @@ fun test_runtime_corelib_syntax_if() {
     )?
 }
 
-fun test_runtime_corelib_syntax_let() {
-    test_section("test_runtime_corelib_syntax_let")
-    debug_clear_all_objects()
-
-    let env = runtime_corelib_import(new_env())
-
-    test_expectation("it should bind values to local variables (no binds)")
-    assert_exprs_equal(
-        "(let () 1)",
-        "1",
-        env,
-    )?
-
-    test_expectation("it should bind values to local variables (single bind)")
-    assert_exprs_equal(
-        "(let ((a 123)) a)",
-        "123",
-        env,
-    )?
-
-    test_expectation("it should bind values to local variables (many binds)")
-    assert_exprs_equal(
-        "(let ((a 2) (b 3)) (+ a b))",
-        "5",
-        env,
-    )?
-}
-
-fun test_runtime_corelib_syntax_lambda() {
-    test_section("test_runtime_corelib_syntax_lambda")
-    debug_clear_all_objects()
-
-    let env = runtime_corelib_import(new_env())
-
-    test_expectation("it should create a closure (no args)")
-    assert_exprs_equal(
-        "((lambda () 123))",
-        "123",
-        env,
-    )?
-
-    test_expectation("it should create a closure (single arg)")
-    assert_exprs_equal(
-        "((lambda (x) x) \"a\")",
-        "\"a\"",
-        env,
-    )?
-
-    test_expectation("it should create a closure (many args)")
-    assert_exprs_equal(
-        "((lambda (a b c) (cons a (cons b (cons c nil)))) 3 2 1)",
-        "'(3 2 1)",
-        env,
-    )?
-}
 
 main {
     test_runtime_corelib_syntax_if()?
-    test_runtime_corelib_syntax_let()?
-    test_runtime_corelib_syntax_lambda()?
 }
