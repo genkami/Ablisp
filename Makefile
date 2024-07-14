@@ -8,9 +8,12 @@ out/ablisp: src/*.ab
 	mkdir -p out
 	amber ./src/ablisp.ab ./out/ablisp
 
-out/%_test.bash: src/%_test.ab
+out/%_test.bash: src/%_test.ab src/*.ab
 	mkdir -p out
 	amber $< $@
+
+docs/corelib.md: out/ablisp examples/gen-corelib-doc.lisp
+	./out/ablisp examples/gen-corelib-doc.lisp > $@
 
 .PHONY: clean
 clean:
