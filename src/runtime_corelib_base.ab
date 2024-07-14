@@ -9,6 +9,10 @@ import * from "./eval.ab"
 let _funcref_echo = ""
 let _funcref_error = ""
 let _funcref_exit = ""
+let _funcref_eqv = ""
+let _funcref_equal = ""
+let _funcref_quote = ""
+let _funcref_cons = ""
 
 pub fun runtime_corelib_base_echo_funcref(): Text {
     return _funcref_echo
@@ -151,25 +155,236 @@ native_track_next_funcall()
 exit_impl()
 _funcref_exit = native_get_last_funcref()
 
+pub fun runtime_corelib_base_eqv_funcref(): Text {
+    return _funcref_eqv
+}
+
+let _eqv_desc = "Returns `t` if the arguments are the same; otherwise returns `nil`.
+
+```
+> (eqv? 1 1)
+;=> t
+> (eqv? 1 2)
+;=> nil
+> (eqv? \"foo\" 'foo)
+;=> nil
+> (eqv? (cons 1 2) (cons 1 2))
+;=> nil
+> (let ((pair (cons 1 2)))
+    (eqv? pair pair))
+;=> t
+```
+"
+
+fun eqv_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let lhs = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let rhs = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if object_eqv(lhs, rhs) {
+        native_return(new_ok(new_t()))
+        return null
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+eqv_impl()
+_funcref_eqv = native_get_last_funcref()
+
+pub fun runtime_corelib_base_equal_funcref(): Text {
+    return _funcref_equal
+}
+
+let _equal_desc = "Returns `t` if the arguments are structually equal; otherwise returns `nil`.
+
+```
+> (equal? 1 1)
+;=> t
+> (equal? 1 2)
+;=> nil
+> (equal? \"foo\" 'foo)
+;=> nil
+> (equal? (cons 1 2) (cons 1 2))
+;=> t
+> (let ((pair (cons 1 2)))
+    (equal? pair pair))
+;=> t
+```
+```
+"
+
+fun equal_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let lhs = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let rhs = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if object_equal(lhs, rhs) {
+        native_return(new_ok(new_t()))
+        return null
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+equal_impl()
+_funcref_equal = native_get_last_funcref()
+
+pub fun runtime_corelib_base_quote_funcref(): Text {
+    return _funcref_quote
+}
+
+let _quote_desc = "Returns an unevaluated argument.
+
+```
+> (quote 3)
+;=> 3
+> (quote foo)
+;=> foo
+> (quote (a b c))
+;=> (a b c)
+> '(a b c)   ; shorthand for quote
+;=> (a b c)
+```
+"
+
+fun quote_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let content = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    native_return(new_ok(content))
+    return null
+}
+
+native_track_next_funcall()
+quote_impl()
+_funcref_quote = native_get_last_funcref()
+
+fun runtime_corelib_base_cons_funcref(): Text {
+    return _funcref_cons
+}
+
+let _cons_desc = "Makes a cons-cell.
+
+```
+> (cons 1 2)
+;=> (1 . 2)
+> (cons 'a (cons 'b (cons 'c nil)))
+;=> (a b c)
+```
+"
+
+fun cons_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let car = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let cdr = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let pair = new_cons(car, cdr)
+    native_return(new_ok(pair))
+    return null
+}
+
+native_track_next_funcall()
+cons_impl()
+_funcref_cons = native_get_last_funcref()
+
 // TODO:
-// - eqv/equal
 // - eval
 // - help
 // - if
 // - let/letrec
 // - and/or
 // - foreach
-// - quote
 // - car/cdr
 // - set
 // - set-car
 // - set-cdr
 // - catch
-// - (err code reason)
 
 pub fun runtime_corelib_base_import(env: Num): Num {
     env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo, _echo_desc))
     env = env_define(env, new_symbol("error"), new_native_fun(_funcref_error, _error_desc))
     env = env_define(env, new_symbol("exit"), new_native_fun(_funcref_exit, _exit_desc))
+    env = env_define(env, new_symbol("eqv?"), new_native_fun(_funcref_eqv, _eqv_desc))
+    env = env_define(env, new_symbol("equal?"), new_native_fun(_funcref_equal, _equal_desc))
+    env = env_define(env, new_symbol("quote"), new_special_form(_funcref_quote, _quote_desc))
+    env = env_define(env, new_symbol("cons"), new_native_fun(_funcref_cons, _cons_desc))
     return env
 }
