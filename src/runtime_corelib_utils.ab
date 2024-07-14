@@ -9,6 +9,8 @@ import * from "./eval.ab"
 let _funcref_echo = ""
 let _funcref_exit = ""
 let _funcref_special_help = ""
+let _funcref_special_eval = ""
+let _funcref_object_to_text = ""
 
 pub fun runtime_corelib_utils_echo_funcref(): Text {
     return _funcref_echo
@@ -170,13 +172,110 @@ native_track_next_funcall()
 special_help_impl()
 _funcref_special_help = native_get_last_funcref()
 
-// TODO:
-// - eval
-// - object->string
+fun runtime_corelib_utils_eval_funcref(): Text {
+    return _funcref_special_eval
+}
+
+let _special_eval_desc = "Evaluates an expression.
+
+```
+> (eval '(+ 1 2))
+;=> 3
+> (let ((a 1) (b 2)) (eval '(cons a b)))
+;=> (1 . 2)
+```
+"
+
+fun special_eval_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let quoted_expr = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let expr_result = eval_expr(quoted_expr, env, text_value(ctx))
+    if result_is_err(expr_result) {
+        native_return(expr_result)
+        return null
+    }
+    let expr = ok_val(expr_result)
+
+    // Since special_eval is a special form, it should evaluate the result again
+    // so that uses can evaluate data instead of an expression itself.
+    let result = eval_expr(expr, env, "<eval>")
+    native_return(result)
+    return null
+}
+
+native_track_next_funcall()
+special_eval_impl()
+_funcref_special_eval = native_get_last_funcref()
+
+pub fun runtime_corelib_utils_object_to_text_funcref(): Text {
+    reutrn _funcref_object_to_text
+}
+
+let _object_to_text_desc = "Converts an object into a text.
+
+```
+> (object->text 123)
+;=> \"123\"
+> (object->text '(1 a t nil))
+;=> \"(1 a t nil)\"
+```
+"
+
+fun object_to_text_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let obj = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let str = object_to_string(obj)
+    native_return(new_ok(new_text(str)))
+    return null
+}
+
+native_track_next_funcall()
+object_to_text_impl()
+_funcref_object_to_text = native_get_last_funcref()
 
 pub fun runtime_corelib_utils_import(env: Num): Num {
-    env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo, _echo_desc))
-    env = env_define(env, new_symbol("exit"), new_native_fun(_funcref_exit, _exit_desc))
     env = env_define(env, new_symbol("help"), new_special_form(_funcref_special_help, _special_help_desc))
+    env = env_define(env, new_symbol("exit"), new_native_fun(_funcref_exit, _exit_desc))
+    env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo, _echo_desc))
+    env = env_define(env, new_symbol("eval"), new_special_form(_funcref_special_eval, _special_eval_desc))
+    env = env_define(env, new_symbol("object->text"), new_native_fun(_funcref_object_to_text, _object_to_text_desc))
     return env
 }

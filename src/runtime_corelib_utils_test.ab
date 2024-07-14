@@ -14,6 +14,41 @@ fun test_runtime_corelib_utils_exit() {
     assert_expr_raises_err("(exit)", code_exit_interpreter(), env)?
 }
 
+fun test_runtime_corelib_utils_eval() {
+    test_section("test_runtime_corelib_utils_eval")
+    
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+
+    test_expectation("it should evaluate a given expression")
+    assert_exprs_equal(
+        "(eval '(+ 1 2))",
+        "3",
+        env,
+    )?
+
+    test_expectation("expressions can access local variables")
+    assert_exprs_equal(
+        "(let ((a 1) (b 2)) (eval '(cons a b)))",
+        "(cons 1 2)",
+        env,
+    )?
+}
+
+fun test_runtime_corelib_utils_object_to_text() {
+    test_section("test_runtime_corelib_utils_object_to_text")
+    test_expectation("it should convert an object into a string")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal(
+        "(object->text '(1 '(2 3) a))",
+        "\"(1 '(2 3) a)\"",
+        env,
+    )?
+}
+
 main {
     test_runtime_corelib_utils_exit()?
+    test_runtime_corelib_utils_eval()?
+    test_runtime_corelib_utils_object_to_text()?
 }
