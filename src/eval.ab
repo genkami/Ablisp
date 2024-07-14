@@ -5,92 +5,6 @@ import * from "./callstack.ab"
 import * from "./native.ab"
 import * from "./env.ab"
 
-// new_native_fun returns a new heap-allocated pointer to a native function.
-pub fun new_native_fun(funcref: Text, desc: Text): Num {
-    let val = new_nil()
-    val = new_cons(new_text(desc), val)
-    val = new_cons(new_symbol(funcref), val)
-    val = new_cons(new_symbol("#:native"), val)
-    return val
-}
-
-pub fun object_is_native_fun(obj: Num): Bool {
-    if not object_is_cons(obj) {
-        return false
-    }
-    let tag = cons_car(obj)
-    if not object_is_symbol(tag) {
-        return false
-    }
-    if symbol_name(tag) != "#:native" {
-        return false
-    }
-    return true
-}
-
-pub fun native_fun_funcref(f: Num): Text {
-    let cdr = cons_cdr(f)    // (funcref desc)
-    let cadr = cons_car(cdr) // funcref
-    return symbol_name(cadr)
-}
-
-pub fun native_fun_desc(f: Num): Text {
-    let cdr = cons_cdr(f)      // (funcref desc)
-    let cddr = cons_cdr(cdr)   // (desc)
-    let caddr = cons_car(cddr) // desc
-    return text_value(caddr)
-}
-
-// new_special_form returns a new heap-allocated pointer to a native function.
-// The difference between special forms and native functions (in Ablisp code) is
-// how the evaluator deals with function calls.
-// When an expression `(f a b c ...)` is given and `f` is a native function,
-// the evaluator evaluates `a`, `b`, `c`, ... and passes their values to `f`.
-// On the contrary, if `f` is a special form, the evaluator passes raw (or unevaluated)
-// expressions of `a`, `b`, `c`, ... with the current environment and context to `f`.
-//
-// Example: `(f (+ 1 2) 3)`
-// - If `f` is a native function whose implementation is `native_f_impl`,
-//   the arguments passed to `native_f_impl` will be `(3 3)`.
-// - If `f` is a special form whose implementation is `special_f_impl`,
-//   the arguments passed to `special_f_impl` will be `(env ctx (+ 1 2) 3)`,
-//   where `env` is the current environment, `ctx` is the name of current execution
-//   context, and `(+ 1 2)` is a list of a symbol and numbers.
-pub fun new_special_form(funcref: Text, desc: Text): Num {
-    let val = new_nil()
-    val = new_cons(new_text(desc), val)
-    val = new_cons(new_symbol(funcref), val)
-    val = new_cons(new_symbol("#:special"), val)
-    return val
-}
-
-pub fun object_is_special_form(obj: Num): Bool {
-    if not object_is_cons(obj) {
-        return false
-    }
-    let tag = cons_car(obj)
-    if not object_is_symbol(tag) {
-        return false
-    }
-    if symbol_name(tag) != "#:special" {
-        return false
-    }
-    return true
-}
-
-pub fun special_form_funcref(f: Num): Text {
-    let cdr = cons_cdr(f)    // (funcref)
-    let cadr = cons_car(cdr) // funcref
-    return symbol_name(cadr)
-}
-
-pub fun special_form_desc(f: Num): Text {
-    let cdr = cons_cdr(f)      // (funcref desc)
-    let cddr = cons_cdr(cdr)   // (desc)
-    let caddr = cons_car(cddr) // desc
-    return text_value(caddr)
-}
-
 let _funcref_eval_expr = ""
 
 // eval evaluates `expr` with a given `env` and returns an evaluated expression in result form.
@@ -132,7 +46,6 @@ fun eval_var(expr: Num, env: Num): [Text] {
 }
 
 fun eval_app(expr: Num, env: Num, context: Num): [Text] {
-    // TODO: evaluate args
     if not object_is_cons(expr) {
         let err = new_err(code_syntax_error(), "malformed function application: " + object_to_string(expr))
         return err
