@@ -1,0 +1,31 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./runtime_corelib.ab"
+import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
+
+fun test_runtime_corelib_syntax_begin() {
+    test_section("test_runtime_corelib_syntax_begin")
+    debug_clear_all_objects()
+
+    let env = runtime_corelib_import(new_env())
+
+    test_expectation("when the body is empty, it should return nil")
+    assert_exprs_equal(
+        "(begin)",
+        "nil",
+        env,
+    )?
+
+    test_expectation("it should return the last result")
+    assert_exprs_equal(
+        "(begin 1 2 3)",
+        "3",
+        env,
+    )?
+}
+
+main {
+    test_runtime_corelib_syntax_begin()?
+}

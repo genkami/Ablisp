@@ -14,6 +14,30 @@ let _funcref_special_cond = ""
 let _funcref_special_let = ""
 let _funcref_special_letrec = ""
 let _funcref_special_lambda = ""
+let _funcref_special_begin = ""
+
+fun eval_sequence(expr_seq: Num, env: Num, ctx: Text): [Text] {
+    let last_val = new_nil()
+    loop {
+        if object_is_nil(expr_seq) {
+            break
+        }
+        if not object_is_cons(expr_seq) {
+            let err = new_err(code_syntax_error(), "invalid sequence of expressions: " + object_to_string(expr_seq))
+            return err
+        }
+        let expr = cons_car(expr_seq)
+        expr_seq = cons_cdr(expr_seq)
+
+        let val_result = eval_expr(expr, env, ctx)
+        if result_is_err(val_result) {
+            return val_result
+        }
+        last_val = ok_val(val_result)
+    }
+    return new_ok(last_val)
+}
+
 
 pub fun runtime_corelib_syntax_special_quote_funcref(): Text {
     return _funcref_special_quote
@@ -293,25 +317,8 @@ fun special_cond_impl(): Null {
             continue
         }
 
-        let last_value = new_nil()
-        loop {
-            if object_is_nil(cond_body) {
-                break
-            }
-            if not object_is_cons(cond_body) {
-                native_return(new_err(code_syntax_error(), "invalid cond body: " + object_to_string(cond_body)))
-                return null
-            }
-            let expr = cons_car(cond_body)
-            cond_body = cons_cdr(cond_body)
-            let result_val = eval_expr(expr, env, ctx)
-            if result_is_err(result_val) {
-                native_return(result_val)
-                return null
-            }
-            last_value = ok_val(result_val)
-        }
-        native_return(new_ok(last_value))
+        let result_val = eval_sequence(cond_body, env, ctx)
+        native_return(result_val)
         return null
     }
 
@@ -407,26 +414,8 @@ fun special_let_impl(): Null {
         body_env = env_define(body_env, var_name, var_val)
     }
 
-    let last_val = new_nil()
-    loop {
-        if object_is_nil(body) {
-            break
-        }
-        if not object_is_cons(body) {
-            native_return(new_err(code_syntax_error(), "invalid let body: " + object_to_string(body)))
-            return null
-        }
-        let expr = cons_car(body)
-        body = cons_cdr(body)
-
-        let val_result = eval_expr(expr, body_env, ctx)
-        if result_is_err(val_result) {
-            native_return(val_result)
-            return null
-        }
-        last_val = ok_val(val_result)
-    }
-    native_return(new_ok(last_val))
+    let result_val = eval_sequence(body, body_env, ctx)
+    native_return(result_val)
     return null
 }
 
@@ -556,26 +545,8 @@ fun special_letrec_impl(): Null {
         i += 1
     }
 
-    let last_val = new_nil()
-    loop {
-        if object_is_nil(body) {
-            break
-        }
-        if not object_is_cons(body) {
-            native_return(new_err(code_syntax_error(), "invalid let body: " + object_to_string(body)))
-            return null
-        }
-        let expr = cons_car(body)
-        body = cons_cdr(body)
-
-        let val_result = eval_expr(expr, env, ctx)
-        if result_is_err(val_result) {
-            native_return(val_result)
-            return null
-        }
-        last_val = ok_val(val_result)
-    }
-    native_return(new_ok(last_val))
+    let result_val = eval_sequence(body, env, ctx)
+    native_return(result_val)
     return null
 }
 
@@ -656,15 +627,63 @@ native_track_next_funcall()
 special_lambda_impl()
 _funcref_special_lambda = native_get_last_funcref()
 
+pub fun runtime_corelib_syntax_special_begin_funcref(): Text {
+    return _funcref_special_begin
+}
+
+let _special_begin_desc = "Evaluates a sequence of expressions.
+
+```
+> (begin
+    (echo \"Hello\")
+    123)
+Hello
+;=> 123
+```
+"
+
+fun special_begin_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let body = args
+
+    let result = eval_sequence(body, env, text_value(ctx))
+    native_return(result)
+    return null
+}
+
+native_track_next_funcall()
+special_begin_impl()
+_funcref_special_begin = native_get_last_funcref()
+
 // TODO:
 // - and/or
-// - begin
 // - def/defun
 
 pub fun runtime_corelib_syntax_import(env: Num): Num {
     env = env_define(env, new_symbol("quote"), new_special_form(_funcref_special_quote, _special_quote_desc))
     env = env_define(env, new_symbol("lambda"), new_special_form(_funcref_special_lambda, _special_lambda_desc))
     env = env_define(env, new_symbol("set!"), new_special_form(_funcref_special_set, _special_set_desc))
+    env = env_define(env, new_symbol("begin"), new_special_form(_funcref_special_begin, _special_begin_desc))
     env = env_define(env, new_symbol("cond"), new_special_form(_funcref_special_cond, _special_cond_desc))
     env = env_define(env, new_symbol("if"), new_special_form(_funcref_special_if, _special_if_desc))
     env = env_define(env, new_symbol("letrec"), new_special_form(_funcref_special_letrec, _special_letrec_desc))
