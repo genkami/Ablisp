@@ -1,4 +1,4 @@
-// Module base provides base functions for Ablisp.
+// Module list provides list functions for Ablisp.
 
 import * from "./native.ab"
 import * from "./error.ab"
@@ -14,6 +14,7 @@ import * from "./eval.ab"
 // - foldl/foldr
 // - assq/assv
 // - assoc
+// - foreach
 
 pub fun runtime_corelib_list_import(env: Num): Num {
     return env

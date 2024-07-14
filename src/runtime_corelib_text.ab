@@ -1,0 +1,15 @@
+// Module text provides text functions for Ablisp.
+
+import * from "./native.ab"
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./eval.ab"
+
+// TODO:
+// string-+
+// string->chars
+
+pub fun runtime_corelib_text_import(env: Num): Num {
+    return env
+}

@@ -1,0 +1,78 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./runtime_corelib.ab"
+import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
+
+fun test_runtime_corelib_base_cons() {
+    test_section("test_runtime_corelib_base_cons")
+    test_expectation("it should make a cons-cell")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    let pair = new_cons(new_text("a"), new_num(123))
+    env = env_define(env, new_symbol("pair"), pair)
+    assert_exprs_equal("(cons \"a\" 123)", "pair", env)?
+}
+
+fun test_runtime_corelib_base_car() {
+    test_section("test_runtime_corelib_base_car")
+    test_expectation("it should return the first element of a cons-cell")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal("(car (cons 111 222))", "111", env)?
+}
+
+fun test_runtime_corelib_base_cdr() {
+    test_section("test_runtime_corelib_base_cdr")
+    test_expectation("it should return the second element of a cons-cell")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal("(cdr (cons 111 222))", "222", env)?
+}
+
+fun test_runtime_corelib_base_set_car() {
+    test_section("test_runtime_corelib_base_set_car")
+    test_expectation("it should update the first element of a cons-cell")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    let pair = new_cons(new_text("a"), new_num(123))
+    env = env_define(env, new_symbol("pair"), pair)
+    let result = must_parse_and_eval("(set-car! pair \"b\")", env)?
+    assert_object_eqv(result, new_nil())?
+    let want = new_cons(new_text("b"), new_num(123))
+    assert_object_equal(pair, want)?
+}
+
+fun test_runtime_corelib_base_set_cdr() {
+    test_section("test_runtime_corelib_base_set_cdr")
+    test_expectation("it should update the second element of a cons-cell")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    let pair = new_cons(new_text("a"), new_num(123))
+    env = env_define(env, new_symbol("pair"), pair)
+    let result = must_parse_and_eval("(set-cdr! pair 456)", env)?
+    assert_object_eqv(result, new_nil())?
+    let want = new_cons(new_text("a"), new_num(456))
+    assert_object_equal(pair, want)?
+}
+
+fun test_runtime_corelib_base_set() {
+    test_section("test_runtime_corelib_base_set")
+    test_expectation("it should update the value of a variable")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    env = env_define(env, new_symbol("foo"), new_num(123))
+    let result = must_parse_and_eval("(set! foo 456)", env)?
+    assert_object_eqv(result, new_nil())?
+    assert_exprs_equal("foo", "456", env)?
+}
+
+main {
+    test_runtime_corelib_base_cons()?
+    test_runtime_corelib_base_car()?
+    test_runtime_corelib_base_cdr()?
+    test_runtime_corelib_base_set_car()?
+    test_runtime_corelib_base_set_cdr()?
+    test_runtime_corelib_base_set()?
+}

@@ -13,6 +13,11 @@ let _funcref_eqv = ""
 let _funcref_equal = ""
 let _funcref_quote = ""
 let _funcref_cons = ""
+let _funcref_car = ""
+let _funcref_cdr = ""
+let _funcref_set_car = ""
+let _funcref_set_cdr = ""
+let _funcref_special_set = ""
 
 pub fun runtime_corelib_base_echo_funcref(): Text {
     return _funcref_echo
@@ -365,18 +370,261 @@ native_track_next_funcall()
 cons_impl()
 _funcref_cons = native_get_last_funcref()
 
+pub fun runtime_corelib_base_car_funcref(): Text {
+    return _funcref_car
+}
+
+let _car_desc = "Returns the first element of a cons-cell.
+
+```
+> (car (cons 1 2))
+;=> 1
+```
+"
+
+fun car_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let pair = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(pair) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let car = cons_car(pair)
+    native_return(new_ok(car))
+    return null
+}
+
+native_track_next_funcall()
+car_impl()
+_funcref_car = native_get_last_funcref()
+
+pub fun runtime_corelib_base_cdr_funcref() {
+    return _funcref_cdr
+}
+
+let _cdr_desc = "Returns the second element of a cons-cell.
+
+```
+> (cdr (cons 1 2))
+;=> 2
+```
+"
+
+fun cdr_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let pair = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(pair) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let cdr = cons_cdr(pair)
+    native_return(new_ok(cdr))
+    return null
+}
+
+native_track_next_funcall()
+cdr_impl()
+_funcref_cdr = native_get_last_funcref()
+
+pub fun runtime_corelib_base_set_car_funcref(): Text {
+    return _funcref_set_car
+}
+
+let _set_car_desc = "Updates the first element of a cons-cell.
+
+```
+> (let ((pair (cons 1 2)))
+      (set-car! pair 999)
+      pair)
+;=> (999 . 2)
+```
+"
+
+fun set_car_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let pair = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(pair) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let new_car = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    cons_set_car(pair, new_car)
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+set_car_impl()
+_funcref_set_car = native_get_last_funcref()
+
+pub fun runtime_corelib_base_set_cdr_funcref(): Text {
+    return _funcref_set_cdr
+}
+
+let _set_cdr_desc = "Updates the second element of a cons-cell.
+
+```
+> (let ((pair (cons 1 2)))
+      (set-car! pair 999)
+      pair)
+;=> (1 . 999)
+```
+"
+
+fun set_cdr_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let pair = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(pair) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let new_cdr = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    cons_set_cdr(pair, new_cdr)
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+set_cdr_impl()
+_funcref_set_cdr = native_get_last_funcref()
+
+pub fun runtime_corelib_base_special_set_funcref(): Text {
+    return _funcref_special_set
+}
+
+let _special_set_desc = "Updates the value of a variable.
+
+```
+> (let ((a 1)
+        (b 2))
+      (set! a 999)
+      (cons a b))
+;=> (999 . 2)
+```
+"
+
+fun special_set_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let var_name = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_symbol(var_name) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let value = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let result = env_set(env, var_name, value)
+    if result_is_err(result) {
+        native_return(result)
+        return null
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+special_set_impl()
+_funcref_special_set = native_get_last_funcref()
+
 // TODO:
 // - eval
 // - help
 // - if
 // - let/letrec
 // - and/or
-// - foreach
-// - car/cdr
-// - set
-// - set-car
-// - set-cdr
 // - catch
+// - object->string
+// - begin
 
 pub fun runtime_corelib_base_import(env: Num): Num {
     env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo, _echo_desc))
@@ -386,5 +634,10 @@ pub fun runtime_corelib_base_import(env: Num): Num {
     env = env_define(env, new_symbol("equal?"), new_native_fun(_funcref_equal, _equal_desc))
     env = env_define(env, new_symbol("quote"), new_special_form(_funcref_quote, _quote_desc))
     env = env_define(env, new_symbol("cons"), new_native_fun(_funcref_cons, _cons_desc))
+    env = env_define(env, new_symbol("car"), new_native_fun(_funcref_car, _car_desc))
+    env = env_define(env, new_symbol("cdr"), new_native_fun(_funcref_cdr, _cdr_desc))
+    env = env_define(env, new_symbol("set-car!"), new_native_fun(_funcref_set_car, _set_car_desc))
+    env = env_define(env, new_symbol("set-cdr!"), new_native_fun(_funcref_set_cdr, _set_cdr_desc))
+    env = env_define(env, new_symbol("set!"), new_special_form(_funcref_special_set, _special_set_desc))
     return env
 }
