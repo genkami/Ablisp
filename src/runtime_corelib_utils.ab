@@ -274,8 +274,8 @@ _funcref_object_to_text = native_get_last_funcref()
 pub fun runtime_corelib_utils_import(env: Num): Num {
     env = env_define(env, new_symbol("help"), new_special_form(_funcref_special_help, _special_help_desc))
     env = env_define(env, new_symbol("exit"), new_native_fun(_funcref_exit, _exit_desc))
-    env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo, _echo_desc))
     env = env_define(env, new_symbol("eval"), new_special_form(_funcref_special_eval, _special_eval_desc))
     env = env_define(env, new_symbol("object->text"), new_native_fun(_funcref_object_to_text, _object_to_text_desc))
+    env = env_define(env, new_symbol("echo"), new_native_fun(_funcref_echo, _echo_desc))
     return env
 }

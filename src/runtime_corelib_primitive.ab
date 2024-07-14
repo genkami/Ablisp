@@ -352,10 +352,10 @@ _funcref_set_cdr = native_get_last_funcref()
 pub fun runtime_corelib_primitive_import(env: Num): Num {
     env = env_define(env, new_symbol("eqv?"), new_native_fun(_funcref_eqv, _eqv_desc))
     env = env_define(env, new_symbol("equal?"), new_native_fun(_funcref_equal, _equal_desc))
-    env = env_define(env, new_symbol("cons"), new_native_fun(_funcref_cons, _cons_desc))
-    env = env_define(env, new_symbol("car"), new_native_fun(_funcref_car, _car_desc))
-    env = env_define(env, new_symbol("cdr"), new_native_fun(_funcref_cdr, _cdr_desc))
-    env = env_define(env, new_symbol("set-car!"), new_native_fun(_funcref_set_car, _set_car_desc))
     env = env_define(env, new_symbol("set-cdr!"), new_native_fun(_funcref_set_cdr, _set_cdr_desc))
+    env = env_define(env, new_symbol("set-car!"), new_native_fun(_funcref_set_car, _set_car_desc))
+    env = env_define(env, new_symbol("cdr"), new_native_fun(_funcref_cdr, _cdr_desc))
+    env = env_define(env, new_symbol("car"), new_native_fun(_funcref_car, _car_desc))
+    env = env_define(env, new_symbol("cons"), new_native_fun(_funcref_cons, _cons_desc))
     return env
 }

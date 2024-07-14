@@ -123,7 +123,7 @@ _funcref_sub = native_get_last_funcref()
 // - %
 
 pub fun runtime_corelib_math_import(env: Num): Num {
-    env = env_define(env, new_symbol("+"), new_native_fun(_funcref_add, _add_desc))
     env = env_define(env, new_symbol("-"), new_native_fun(_funcref_sub, _sub_desc))
+    env = env_define(env, new_symbol("+"), new_native_fun(_funcref_add, _add_desc))
     return env
 }

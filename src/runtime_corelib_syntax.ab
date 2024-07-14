@@ -503,16 +503,15 @@ _funcref_special_lambda = native_get_last_funcref()
 
 // TODO:
 // - letrec
-// - cond
 // - and/or
 // - begin
 
 pub fun runtime_corelib_syntax_import(env: Num): Num {
     env = env_define(env, new_symbol("quote"), new_special_form(_funcref_special_quote, _special_quote_desc))
+    env = env_define(env, new_symbol("lambda"), new_special_form(_funcref_special_lambda, _special_lambda_desc))
     env = env_define(env, new_symbol("set!"), new_special_form(_funcref_special_set, _special_set_desc))
     env = env_define(env, new_symbol("cond"), new_special_form(_funcref_special_cond, _special_cond_desc))
     env = env_define(env, new_symbol("if"), new_special_form(_funcref_special_if, _special_if_desc))
     env = env_define(env, new_symbol("let"), new_special_form(_funcref_special_let, _special_let_desc))
-    env = env_define(env, new_symbol("lambda"), new_special_form(_funcref_special_lambda, _special_lambda_desc))
     return env
 }

@@ -14,9 +14,9 @@ import * from "./runtime_corelib_utils.ab"
 pub fun runtime_corelib_import(env: Num): Num {
     env = runtime_corelib_utils_import(env)
     env = runtime_corelib_error_import(env)
-    env = runtime_corelib_math_import(env)
     env = runtime_corelib_list_import(env)
     env = runtime_corelib_text_import(env)
+    env = runtime_corelib_math_import(env)
     env = runtime_corelib_primitive_import(env)
     env = runtime_corelib_syntax_import(env)
     return env
