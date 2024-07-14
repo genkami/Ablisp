@@ -1,5 +1,6 @@
 // Module object manages Ablisp virtual memory and every Ablisp object.
-import {len} from "std"
+import {len, chars} from "std"
+import * from "./char.ab"
 import * from "./callstack.ab"
 
 // Memory holds every object in Ablisp.
@@ -73,6 +74,10 @@ fun put_object(i: Num, tag: Num, val1: Text, val2: Text): Null {
 #[allow_absurd_cast]
 pub fun tag_of(ptr: Num): Num {
     return the_memory[3 * ptr] as Num
+}
+
+pub fun object_is_unused(ptr: Num): Bool {
+    return tag_of(ptr) == tag_unused()
 }
 
 pub fun object_is_num(ptr: Num): Bool {
@@ -326,6 +331,33 @@ pub fun special_form_desc(f: Num): Text {
     return text_value(caddr)
 }
 
+pub fun object_is_quotation(obj: Num): Bool {
+    if not object_is_cons(obj) {
+        return false
+    }
+    let tag = cons_car(obj)
+    if not object_is_symbol(tag) {
+        return false
+    }
+    if symbol_name(tag) != "quote" {
+        return false
+    }
+    let cdr = cons_cdr(obj)
+    if not object_is_cons(cdr) {
+        return false
+    }
+    if not object_is_nil(cons_cdr(cdr)) {
+        return false
+    }
+    return true
+}
+
+pub fun quotation_content(obj: Num): Num {
+    let cdr = cons_cdr(obj)    // (content)
+    let cadr = cons_car(cdr)   // content
+    return cadr
+}
+
 pub fun object_eqv(ptr1: Num, ptr2: Num): Bool {
     let tag1 = tag_of(ptr1)
     let tag2 = tag_of(ptr2)
@@ -439,13 +471,43 @@ pub fun object_equal(obj1: Num, obj2: Num): Bool {
     return false
 }
 
+fun escape_text(s: Text): Text {
+    let cs = chars(s)
+    let escaped = "\""
+    let bs = backslash(1)
+
+    loop c in cs {
+        if {
+            c == "\n" {
+                escaped += bs
+                escaped += "n"
+            }
+            c == "\"" {
+                escaped += bs
+                escaped += "\""
+            }
+            c == bs {
+                escaped += bs
+                escaped += bs
+            }
+            else {
+                escaped += c
+            }
+        }
+    }
+
+    escaped += "\""
+    return escaped
+}
+
 pub fun object_to_string(ptr: Num): Text {
     let close_paren = -1
+    let dot = -2
     let str = ""
     let stack_base = callstack_current_sp()
     callstack_push(ptr)
 
-    let first = true
+    let want_space = false
     loop {
         if callstack_current_sp() == stack_base {
             break
@@ -456,43 +518,84 @@ pub fun object_to_string(ptr: Num): Text {
             str += ")"
             continue
         }
-        
-        if first {
-            first = false
-        } else {
+
+        if want_space {
             str += " "
+        } else {
+            want_space = true
         }
 
-        let tag = tag_of(ptr)
-        if {
-            tag == tag_unused() {
-                str += "<unused: {ptr}>"
-            }
-            tag == tag_num() {
-                str += "{num_value(ptr)}"
-            }
-            tag == tag_text() {
-                str += "'{text_value(ptr)}'"
-            }
-            tag == tag_symbol() {
-                str += symbol_name(ptr)
-            }
-            tag == tag_t() {
-                str += "t"
-            }
-            tag == tag_nil() {
-                str += "nil"
-            }
-            tag == tag_cons() {
-                str += "(cons"
-                callstack_push(close_paren)
-                callstack_push(cons_cdr(ptr))
-                callstack_push(cons_car(ptr))
-            }
-            else {
-                str += "<invalid: {ptr} tag={tag}>"
-            }
+        if ptr == dot {
+            str += "."
+            continue
         }
+
+        if object_is_unused(ptr) {
+            str += "<unused: {ptr}>"
+            continue
+        }
+        if object_is_num(ptr) {
+            str += "{num_value(ptr)}"
+            continue
+        }
+        if object_is_text(ptr) {
+            str += escape_text(text_value(ptr))
+            continue
+        }
+        if object_is_symbol(ptr) {
+            str += symbol_name(ptr)
+            continue
+        }
+        if object_is_t(ptr) {
+            str += "t"
+            continue
+        }
+        if object_is_nil(ptr) {
+            str += "nil"
+            continue
+        }
+        if object_is_native_fun(ptr) {
+            let name = native_fun_funcref(ptr)
+            str += "<#:native {name}>"
+            continue
+        }
+        if object_is_special_form(ptr) {
+            let name = special_form_funcref(ptr)
+            str += "<#:special {name}>"
+            continue
+        }
+        if object_is_quotation(ptr) {
+            str += "'"
+            want_space = false
+            callstack_push(quotation_content(ptr))
+            continue
+        }
+        if object_is_cons(ptr) {
+            str += "("
+            want_space = false
+            callstack_push(close_paren)
+
+            let elems = [Num]
+            let iter = ptr
+            loop {
+                if not object_is_cons(iter) {
+                    break
+                }
+                let car = cons_car(iter)
+                iter = cons_cdr(iter)
+                elems = [car] + elems
+            }
+            let last = iter
+            if not object_is_nil(last) {
+                callstack_push(last)
+                callstack_push(dot)
+            }
+            loop i in elems {
+                callstack_push(i)
+            }
+            continue
+        }
+        str += "<invalid: {ptr}>"
     }
     return str
 }
