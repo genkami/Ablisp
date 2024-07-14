@@ -94,9 +94,9 @@ fun test_parse_sexp_symlike() {
     assert_ok_object_eqv(val, new_symbol("f00"))?
     
     test_expectation("it should parse a symbol consisting of alphabets and symbols")
-    init_parser(".set-car!")
+    init_parser("^set-car!")
     let val = parse_sexp()
-    assert_ok_object_eqv(val, new_symbol(".set-car!"))?
+    assert_ok_object_eqv(val, new_symbol("^set-car!"))?
 
     test_expectation("it should parse a symbol consisting of symbols")
     init_parser("+")
@@ -156,6 +156,26 @@ pub fun test_parse_sexp_list() {
     want = new_cons(elem, want)
     want = new_cons(new_num(1), want)
     assert_ok_object_equal(val, want)?
+
+    test_expectation("it should parse a non-list cons-cell")
+    init_parser("(1 (2 . 3) . 4)")
+    let val = parse_sexp()
+    let want = new_num(4)
+    let elem = new_num(3)
+    elem = new_cons(new_num(2), elem)
+    want = new_cons(elem, want)
+    want = new_cons(new_num(1), want)
+    assert_ok_object_equal(val, want)?
+
+    test_expectation("it should return parse_error when the cdr is missing")
+    init_parser("(1 . )")
+    let val = parse_sexp()
+    assert_err_code(val, code_parse_error())?
+
+    test_expectation("it should return parse_error when the car is missing")
+    init_parser("( . 2)")
+    let val = parse_sexp()
+    assert_err_code(val, code_parse_error())?
 }
 
 fun test_parse_sexp_quote() {

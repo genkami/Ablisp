@@ -198,7 +198,7 @@ fun consume_text(): [Text] {
 let symlike_head_chars = chars(
     "abcdefghijklmnopqrstuvwxyz" +
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
-    "~!@$%^&*-_=+:.<>/?"
+    "~!@$%^&*-_=+:<>/?"
 )
 
 let symlike_tail_chars = symlike_head_chars + chars(
@@ -263,12 +263,18 @@ fun is_quote(): Bool {
     return c == "'"
 }
 
+fun is_dot(): Bool {
+    let c = peek(0)
+    return c == "."
+}
+
 pub fun parse_sexp(): [Text] {
     let stack_base = callstack_current_sp()
     let last_error = new_ok(0)
     let eof_before_next_object = false
     let list_start = -1
     let quote_next_object = -2
+    let dot = -3
     loop {
         // Here, the state of the top N elements of the stack is one of the following:
         //   [(stack top) <----------- (bottom)]
@@ -361,15 +367,49 @@ pub fun parse_sexp(): [Text] {
             callstack_push(list_start)
             continue
         }
+        if is_dot() {
+            consume_next()
+            callstack_push(dot)
+            continue
+        }
         if is_list_end() {
             consume_next()
             let list = new_nil()
+            let last_popped = -4
+            let has_dot = false
+            let invalid = false
+            let i = 0
             loop {
                 let top = callstack_pop()
                 if top == list_start {
                     break
                 }
+                if top == dot {
+                    has_dot = true
+                    if i != 1 {
+                        last_error = new_err(code_parse_error(), "malformed cons-cell")
+                        invalid = true
+                        break
+                    }
+                    list = last_popped
+                    i += 1
+                    continue
+                }
+                if top < 0 {
+                    last_error = new_err(code_parse_error(), "malformed cons-cell")
+                    invalid = true
+                    break
+                }
+                last_popped = top
                 list = new_cons(top, list)
+                i += 1
+            }
+            if invalid {
+                break
+            }
+            if has_dot and (i < 3) {
+                last_error = new_err(code_parse_error(), "malformed cons-cell")
+                break
             }
             callstack_push(list)
             continue
