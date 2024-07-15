@@ -15,7 +15,6 @@ fun test_runtime_corelib_math_add() {
     assert_exprs_equal("(+ 1 2 3)", "6", env)?
 }
 
-
 fun test_runtime_corelib_math_sub() {
     test_section("test_runtime_corelib_math_sub")
     test_expectation("it should subtract arguments")
@@ -27,7 +26,43 @@ fun test_runtime_corelib_math_sub() {
     assert_exprs_equal("(- 3 2 1)", "0", env)?
 }
 
+fun test_runtime_corelib_math_mul() {
+    test_section("test_runtime_corelib_math_mul")
+    test_expectation("it should multiply arguments")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal("(*)", "1", env)?
+    assert_exprs_equal("(* 2)", "2", env)?
+    assert_exprs_equal("(* 2 3 4)", "24", env)?
+}
+
+fun test_runtime_corelib_math_div() {
+    test_section("test_runtime_corelib_math_div")
+    test_expectation("it should divide arguments")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_expr_raises_err("(/)", code_invalid_argument(), env)?
+    assert_exprs_equal("(/ 1)", "1", env)?
+    assert_exprs_equal("(/ 9 3)", "3", env)?
+    assert_exprs_equal("(/ 9 3 3)", "1", env)?
+    assert_expr_raises_err("(/ 9 0)", code_zero_division(), env)?
+}
+
+fun test_runtime_corelib_math_mod() {
+    test_section("test_runtime_corelib_math_mod")
+    test_expectation("it should return the remainder of a division")
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+    assert_expr_raises_err("(%)", code_invalid_argument(), env)?
+    assert_exprs_equal("(% 7 3)", "1", env)?
+    assert_exprs_equal("(% -7 3)", "-1", env)?
+    assert_expr_raises_err("(% 7 0)", code_zero_division(), env)?
+}
+
 main {
     test_runtime_corelib_math_add()?
     test_runtime_corelib_math_sub()?
+    test_runtime_corelib_math_mul()?
+    test_runtime_corelib_math_div()?
+    test_runtime_corelib_math_mod()?
 }
