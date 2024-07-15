@@ -17,6 +17,33 @@ pub fun eval_expr(expr: Num, env: Num, context: Text): [Text] {
     return native_call(_funcref_eval_expr, args)
 }
 
+// eval_decl evalates decls and returns an environment which was
+// obtained by applying `env` to the implementation of the decl.
+// It returns `invalid_decl` error when `expr` is not an application of a decl.
+pub fun eval_decl(expr: Num, env: Num, context: Text): [Text] {
+    if not object_is_cons(expr) {
+        return new_err(code_syntax_error(), "invalid decl: " + object_to_string(expr))
+    }
+    let decl_expr = cons_car(expr)
+    let args = cons_cdr(expr)
+    if not object_is_symbol(decl_expr) {
+        return new_err(code_invalid_decl(), "invalid decl: " + object_to_string(decl_expr))
+    }
+    let decl_val_result = env_lookup(env, decl_expr)
+    if result_is_err(decl_val_result) {
+        return decl_val_result
+    }
+    let decl_val = ok_val(decl_val_result)
+    if not object_is_decl(decl_val) {
+        return new_err(code_invalid_decl(), "not a decl: " + object_to_string(decl_expr))
+    }
+    let decl_fref = decl_funcref(decl_val)
+    args = new_cons(new_text(context), args)
+    args = new_cons(env, args)
+    let new_env_result = native_call(decl_fref, args)
+    return new_env_result
+}
+
 fun expr_is_literal(expr: Num): Bool {
     if object_is_num(expr) {
         return true
@@ -162,6 +189,12 @@ fun eval_app(expr: Num, env: Num, context: Num): [Text] {
         }
         return call_result
     }
+
+    if object_is_decl(fun_val) {
+        let err = new_err(code_syntax_error(), "declaration " + object_to_string(fun_val) + " cannot be used here")
+        return err
+    }
+
     let err = new_err(code_value_error(), object_to_string(fun_val) + " is not callable")
     return err
 }

@@ -13,6 +13,7 @@ pub fun code_internal_error(): Text     { return "internal_error" }
 pub fun code_user_error(): Text         { return "user_error" }
 pub fun code_exit_interpreter(): Text   { return "exit_interpreter" }
 pub fun code_zero_division(): Text      { return "zero_division" }
+pub fun code_invalid_decl(): Text       { return "invalid decleration" }
 
 // new_ok returns a new ok value.
 pub fun new_ok(ptr: Num): [Text] {

@@ -385,6 +385,43 @@ pub fun closure_env(cl: Num): Num {
     return caddddr
 }
 
+// new_decl returns a new heap-allocated pointer to a native function.
+// A decl is a special kind of special form which returns an updated environment.
+pub fun new_decl(funcref: Text, desc: Text): Num {
+    let val = new_nil()
+    val = new_cons(new_text(desc), val)
+    val = new_cons(new_symbol(funcref), val)
+    val = new_cons(new_symbol("#:decl"), val)
+    return val
+}
+
+pub fun object_is_decl(obj: Num): Bool {
+    if not object_is_cons(obj) {
+        return false
+    }
+    let tag = cons_car(obj)
+    if not object_is_symbol(tag) {
+        return false
+    }
+    if symbol_name(tag) != "#:decl" {
+        return false
+    }
+    return true
+}
+
+pub fun decl_funcref(f: Num): Text {
+    let cdr = cons_cdr(f)    // (funcref)
+    let cadr = cons_car(cdr) // funcref
+    return symbol_name(cadr)
+}
+
+pub fun decl_desc(f: Num): Text {
+    let cdr = cons_cdr(f)      // (funcref desc)
+    let cddr = cons_cdr(cdr)   // (desc)
+    let caddr = cons_car(cddr) // desc
+    return text_value(caddr)
+}
+
 pub fun object_is_quotation(obj: Num): Bool {
     if not object_is_cons(obj) {
         return false
@@ -616,6 +653,11 @@ pub fun object_to_string(ptr: Num): Text {
         if object_is_special_form(ptr) {
             let name = special_form_funcref(ptr)
             str += "<#:special {name}>"
+            continue
+        }
+        if object_is_decl(ptr) {
+            let name = decl_funcref(ptr)
+            str += "<#:decl {name}>"
             continue
         }
         if object_is_closure(ptr) {

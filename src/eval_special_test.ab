@@ -23,6 +23,7 @@ _funcref_special_return_args = native_get_last_funcref()
 
 fun test_eval_special_form() {
     test_section("test_eval_special_form")
+    debug_clear_all_objects()
 
     test_expectation("it should call a special form with unevaluated args")
     let env = new_env()

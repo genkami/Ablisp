@@ -52,3 +52,17 @@ pub fun assert_expr_raises_err(sexp: Text, code: Text, env: Num): Null {
     let result_val = eval_expr(expr, env, "<toplevel>")
     assert_err_code(result_val, code)?
 }
+
+pub fun parse_and_eval_decl(sexp: Text, env: Num): [Text] {
+    init_parser(sexp)
+    let result_expr = parse_sexp()
+    assert_ok(result_expr)?
+    let expr = ok_val(result_expr)
+    return eval_decl(expr, env, "<toplevel>")
+}
+
+pub fun must_parse_and_eval_decl(sexp: Text, env: Num): Num {
+    let val = parse_and_eval_decl(sexp, env)?
+    assert_ok(val)?
+    return ok_val(val)
+}

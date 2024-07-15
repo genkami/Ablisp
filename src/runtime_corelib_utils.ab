@@ -159,6 +159,10 @@ fun special_help_impl(): Null {
             kind = "Special form"
             desc = special_form_desc(value)
         }
+        if object_is_decl(value) {
+            kind = "Declaration"
+            desc = decl_desc(value)
+        }
         if kind != "" {
             echo "## {kind}: `{name}`"
             echo desc
