@@ -1,0 +1,89 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./runtime_corelib.ab"
+import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
+
+fun test_runtime_corelib_primitive_is_xxx() {
+    test_section("test_runtime_corelib_primitive_is_xxx")
+
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+
+    test_expectation("num? should return whether an argument is a num")
+    assert_exprs_equal(
+        "(num? 3)",
+        "t",
+        env,
+    )?
+    assert_exprs_equal(
+        "(num? \"foo\")",
+        "nil",
+        env,
+    )?
+
+    test_expectation("text? should return whether an argument is a text")
+    assert_exprs_equal(
+        "(text? \"foo\")",
+        "t",
+        env,
+    )?
+    assert_exprs_equal(
+        "(text? 'bar)",
+        "nil",
+        env,
+    )?
+
+    test_expectation("symbol? should return whether an argument is a symbol")
+    assert_exprs_equal(
+        "(symbol? 'bar)",
+        "t",
+        env,
+    )?
+    assert_exprs_equal(
+        "(symbol? t)",
+        "nil",
+        env,
+    )?
+
+    test_expectation("t? should return whether an argument is t")
+    assert_exprs_equal(
+        "(t? t)",
+        "t",
+        env,
+    )?
+    assert_exprs_equal(
+        "(t? nil)",
+        "nil",
+        env,
+    )?
+
+    test_expectation("nil? should return whether an argument is nil")
+    assert_exprs_equal(
+        "(nil? nil)",
+        "t",
+        env,
+    )?
+    assert_exprs_equal(
+        "(nil? (cons 1 2))",
+        "nil",
+        env,
+    )?
+
+    test_expectation("cons? should return whether an argument is a cons-cell")
+    assert_exprs_equal(
+        "(cons? (cons 1 2))",
+        "t",
+        env,
+    )?
+    assert_exprs_equal(
+        "(cons? 3)",
+        "nil",
+        env,
+    )?
+}
+
+main {
+    test_runtime_corelib_primitive_is_xxx()?
+}

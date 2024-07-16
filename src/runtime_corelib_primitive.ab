@@ -13,6 +13,12 @@ let _funcref_car = ""
 let _funcref_cdr = ""
 let _funcref_set_car = ""
 let _funcref_set_cdr = ""
+let _funcref_is_num = ""
+let _funcref_is_text = ""
+let _funcref_is_symbol = ""
+let _funcref_is_t = ""
+let _funcref_is_nil = ""
+let _funcref_is_cons = ""
 
 pub fun runtime_corelib_primitive_eqv_funcref(): Text {
     return _funcref_eqv
@@ -349,15 +355,270 @@ native_track_next_funcall()
 set_cdr_impl()
 _funcref_set_cdr = native_get_last_funcref()
 
-// TODO:
-// - num?
-// - text?
-// - symbol?
-// - t?
-// - nil?
-// - cons?
+pub fun runtime_corelib_primitive_is_num_funcref(): Text {
+    return _funcref_is_num
+}
+
+let _is_num_desc = "Returns `t` if an argument is a num; otherwise returns `nil`.
+
+```
+> (num? 3)
+;=> t
+> (num? \"foo\")
+;=> nil
+```
+"
+
+fun is_num_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    let obj = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    if object_is_num(obj) {
+        native_return(new_ok(new_t()))
+        return null
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+is_num_impl()
+_funcref_is_num = native_get_last_funcref()
+
+
+pub fun runtime_corelib_primitive_is_text_funcref(): Text {
+    return _funcref_is_text
+}
+
+let _is_text_desc = "Returns `t` if an argument is a text; otherwise returns `nil`.
+
+```
+> (text? \"foo\")
+;=> t
+> (text? 'bar)
+;=> nil
+```
+"
+
+fun is_text_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    let obj = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    if object_is_text(obj) {
+        native_return(new_ok(new_t()))
+        return null
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+is_text_impl()
+_funcref_is_text = native_get_last_funcref()
+
+
+pub fun runtime_corelib_primitive_is_symbol_funcref(): Text {
+    return _funcref_is_symbol
+}
+
+let _is_symbol_desc = "Returns `t` if an argument is a symbol; otherwise returns `nil`.
+
+```
+> (symbol? 'bar)
+;=> t
+> (symbol? t)
+;=> nil
+```
+"
+
+fun is_symbol_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    let obj = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    if object_is_symbol(obj) {
+        native_return(new_ok(new_t()))
+        return null
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+is_symbol_impl()
+_funcref_is_symbol = native_get_last_funcref()
+
+
+pub fun runtime_corelib_primitive_is_t_funcref(): Text {
+    return _funcref_is_t
+}
+
+let _is_t_desc = "Returns `t` if an argument is `t`; otherwise returns `nil`.
+
+```
+> (t? t)
+;=> t
+> (t? nil)
+;=> nil
+```
+"
+
+fun is_t_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    let obj = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    if object_is_t(obj) {
+        native_return(new_ok(new_t()))
+        return null
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+is_t_impl()
+_funcref_is_t = native_get_last_funcref()
+
+
+pub fun runtime_corelib_primitive_is_nil_funcref(): Text {
+    return _funcref_is_nil
+}
+
+let _is_nil_desc = "Returns `t` if an argument is `nil`; otherwise returns `nil`.
+
+```
+> (nil? nil)
+;=> t
+> (nil? (cons 1 2))
+;=> nil
+```
+"
+
+fun is_nil_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    let obj = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    if object_is_nil(obj) {
+        native_return(new_ok(new_t()))
+        return null
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+is_nil_impl()
+_funcref_is_nil = native_get_last_funcref()
+
+
+pub fun runtime_corelib_primitive_is_cons_funcref(): Text {
+    return _funcref_is_cons
+}
+
+let _is_cons_desc = "Returns `t` if an argument is a cons-cell; otherwise returns `nil`.
+
+```
+> (cons? (cons 1 2))
+;=> t
+> (cons? 3)
+;=> nil
+```
+"
+
+fun is_cons_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    let obj = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    if object_is_cons(obj) {
+        native_return(new_ok(new_t()))
+        return null
+    }
+    native_return(new_ok(new_nil()))
+    return null
+}
+
+native_track_next_funcall()
+is_cons_impl()
+_funcref_is_cons = native_get_last_funcref()
 
 pub fun runtime_corelib_primitive_import(env: Num): Num {
+    env = env_define(env, new_symbol("cons?"), new_native_fun(_funcref_is_cons, _is_cons_desc))
+    env = env_define(env, new_symbol("nil?"), new_native_fun(_funcref_is_nil, _is_nil_desc))
+    env = env_define(env, new_symbol("t?"), new_native_fun(_funcref_is_t, _is_t_desc))
+    env = env_define(env, new_symbol("symbol?"), new_native_fun(_funcref_is_symbol, _is_symbol_desc))
+    env = env_define(env, new_symbol("text?"), new_native_fun(_funcref_is_text, _is_text_desc))
+    env = env_define(env, new_symbol("num?"), new_native_fun(_funcref_is_num, _is_num_desc))
     env = env_define(env, new_symbol("eqv?"), new_native_fun(_funcref_eqv, _eqv_desc))
     env = env_define(env, new_symbol("equal?"), new_native_fun(_funcref_equal, _equal_desc))
     env = env_define(env, new_symbol("set-cdr!"), new_native_fun(_funcref_set_cdr, _set_cdr_desc))
