@@ -42,7 +42,31 @@ fun test_runtime_corelib_list_map() {
     )?
 }
 
+fun test_runtime_corelib_list_iota() {
+    test_section("test_runtime_corelib_list_iota")
+    debug_clear_all_objects()
+
+    test_expectation("it should make a sequence of numbers")
+    let env = runtime_corelib_import(new_env())
+    assert_exprs_equal(
+        "(iota 3)",
+        "'(0 1 2)",
+        env,
+    )?
+    assert_exprs_equal(
+        "(iota 1 5)",
+        "'(1 2 3 4)",
+        env,
+    )?
+    assert_exprs_equal(
+        "(iota 0)",
+        "nil",
+        env,
+    )?
+}
+
 main {
     test_runtime_corelib_list_list()?
     test_runtime_corelib_list_map()?
+    test_runtime_corelib_list_iota()?
 }

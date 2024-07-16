@@ -8,6 +8,7 @@ import * from "./eval.ab"
 
 let _funcref_list = ""
 let _funcref_map = ""
+let _funcref_iota = ""
 
 pub fun runtime_corelib_syntax_list_list_funcref(): Text {
     return _funcref_list
@@ -107,15 +108,86 @@ native_track_next_funcall()
 map_impl()
 _funcref_map = native_get_last_funcref()
 
+pub fun runtime_corelib_syntax_list_iota_funcref(): Text {
+    return _funcref_iota
+}
+
+let _iota_desc = "Returns a sequence of numbers.
+
+```
+> (iota 3)
+;=> (0 1 2)
+> (iota 1 5)
+;=> (1 2 3 4)
+> (iota 0)
+;=> nil
+```
+"
+
+fun iota_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+        return null
+    }
+    let start = 0
+    let end = 0
+    let first_arg = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_num(first_arg) {
+        native_return(new_err(code_invalid_argument(), "not a number: " + object_to_string(first_arg)))
+        return null
+    }
+    end = num_value(first_arg)
+    if not object_is_nil(args) {
+        if not object_is_cons(args) {
+            native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+            return null
+        }
+        let second_arg = cons_car(args)
+        args = cons_cdr(args)
+        if not object_is_num(second_arg) {
+            native_return(new_err(code_invalid_argument(), "not a number: " + object_to_string(second_arg)))
+            return null
+        }
+        if not object_is_nil(args) {
+            native_return(new_err(code_invalid_argument(), "wrong number of arguments: " + object_to_string(args)))
+            return null
+        }
+        start = end
+        end = num_value(second_arg)
+    }
+
+    let i = end - 1
+    let list = new_nil()
+    loop {
+        if i < start {
+            break
+        }
+        list = new_cons(new_num(i), list)
+        i -= 1
+    }
+    native_return(new_ok(list))
+    return null
+}
+
+native_track_next_funcall()
+iota_impl()
+_funcref_iota = native_get_last_funcref()
+
 // TODO:
 // - filter
-// - iota
 // - foldl/foldr
 // - assq/assv
 // - assoc
 // - foreach
 
 pub fun runtime_corelib_list_import(env: Num): Num {
+    env = env_define(env, new_symbol("iota"), new_native_fun(_funcref_iota, _iota_desc))
     env = env_define(env, new_symbol("map"), new_native_fun(_funcref_map, _map_desc))
     env = env_define(env, new_symbol("list"), new_native_fun(_funcref_list, _list_desc))
     return env
