@@ -319,7 +319,6 @@ pub fun parse_sexp(): [Text] {
             eof_before_next_object = true
             break
         }
-        // TODO: break after consuming a single object
         // NOTE: DO NOT use multiway if statement with function calls because it evaluates
         // all predicates before actually branching, which makes the function
         // significantly slower because each predicate may spawn many processes.
