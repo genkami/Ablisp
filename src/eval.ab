@@ -121,6 +121,36 @@ fun apply_closure(cl: Num, args: Num): [Text] {
     return new_ok(last_value)
 }
 
+// apply_function applies any kind of functions to the arguments.
+pub fun apply_function(f: Num, args: Num): [Text] {
+    if object_is_native_fun(f) {
+        let fref = native_fun_funcref(f)
+        let call_result = native_call(fref, args)
+        if result_is_err(call_result) {
+            let err = err_add_trace(call_result, "native function <" + fref + ">")
+            return err
+        }
+        return call_result
+    }
+
+    if object_is_closure(f) {
+        let call_result = apply_closure(f, args)
+        if result_is_err(call_result) {
+            let err = err_add_trace(call_result, closure_name(f))
+            return err
+        }
+        return call_result
+    }
+
+    if object_is_decl(f) {
+        let err = new_err(code_syntax_error(), "declaration " + object_to_string(f) + " cannot be used here")
+        return err
+    }
+
+    let err = new_err(code_value_error(), object_to_string(f) + " is not callable")
+    return err
+}
+
 fun eval_app(expr: Num, env: Num, context: Num): [Text] {
     if not object_is_cons(expr) {
         let err = new_err(code_syntax_error(), "malformed function application: " + object_to_string(expr))
@@ -170,33 +200,8 @@ fun eval_app(expr: Num, env: Num, context: Num): [Text] {
     loop i in args_val_array {
         args_vals = new_cons(i, args_vals)
     }
-    
-    if object_is_native_fun(fun_val) {
-        let fref = native_fun_funcref(fun_val)
-        let call_result = native_call(fref, args_vals)
-        if result_is_err(call_result) {
-            let err = err_add_trace(call_result, "native function <" + fref + ">")
-            return err
-        }
-        return call_result
-    }
 
-    if object_is_closure(fun_val) {
-        let call_result = apply_closure(fun_val, args_vals)
-        if result_is_err(call_result) {
-            let err = err_add_trace(call_result, text_value(context))
-            return err
-        }
-        return call_result
-    }
-
-    if object_is_decl(fun_val) {
-        let err = new_err(code_syntax_error(), "declaration " + object_to_string(fun_val) + " cannot be used here")
-        return err
-    }
-
-    let err = new_err(code_value_error(), object_to_string(fun_val) + " is not callable")
-    return err
+    return apply_function(fun_val, args_vals)
 }
 
 pub fun eval_expr_funcref(): Text {
