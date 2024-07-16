@@ -273,6 +273,126 @@ In this way, Amber functions can follow the same calling convention, although th
 
 Now that we solved the issue with calling conventions, it's time to consider how to get a function as a value.
 
+I found that there is a way to get a function name without guessing how the compiler works.
+This can be done using a special Bash variable called [FUNCNAME](https://www.gnu.org/software/bash/manual/html_node/Bash-Variables.html#index-FUNCNAME).
+According to the document, this variable contains "the names of all shell functions currently in the execution call stack".
+That means if we can call a function, we can get its name.
+
+But now the next problem arises: How can we call a function before it's actually needed?
+
+To address this question, let's closely take a look at the function definition again:
+
+```
+fun incr(): Null {
+    let args = get_args()       // args is Result<Pair, Error>
+    if result_is_error(args) {
+        return null
+    }
+    ...
+}
+```
+
+The first several lines show that if `get_args` can return error when we just want to get a function name, we can call the function without actually executinhg the function body.
+
+So I updated `get_args` and added some other functions so that we can call a function to get its name without any side effects.
+
+```
+pub fun track_next_funcall(): Null {
+    _should_track_next_funcall = true
+}
+
+pub fun get_last_funcref(): Text {
+    return _last_funcref
+}
+
+pub fun get_args(): [Text] {
+    if _should_track_next_funcall {
+        _should_track_next_funcall = false
+        // $FUNCNAME[1] contains the name of the caller
+        _last_funcref = unsafe $echo "\$\{FUNCNAME[1]}"$
+        return new_err("native_function_tracked", "the function call is tracked")
+    }
+    ...
+    let args = _funcall_args
+    ...
+    return new_ok(args)
+}
+```
+
+With these three functions, we can finally get the name of a function:
+
+```
+let funcref_incr = "" // pointer to incr
+
+fun incr(): Null {
+    let args = get_args()       // args is Result<Pair, Error>
+    if result_is_error(args) {
+        return null
+    }
+    ...
+}
+
+track_next_funcall()
+incr() // returns immediately without doing anything
+funcref_incr = get_last_funcref() // returns $FUNCNAME[1] stored in the previous call
+```
+
+and call such functions using the "funcref"s:
+
+```
+pub fun call_function(funcref: Text, args: Num): [Text] {
+    ...
+    _funcall_args = args
+    ...
+    unsafe ${funcref}$   // call a Bash function by its name
+    let result = _funcall_retval
+    ...
+    return result
+}
+
+let args = new_cons(new_num(123), new_nil()) // args = [123]
+let result = call_function(incr, args)       // returns ok(124)
+echo num_value(ok_val(result))               //=> 124
+```
+
+Furthermore, having a function reference also helped writing recursive functions:
+
+```
+let funcref_fibonacci = "" // defined later
+
+fun fibonacci(): Null {
+    let result_args = get_args()
+    if result_is_err(result_args) { ... }
+    let args = ok_val(result_args)
+    let n = num_value(cons_car(args))    // get the first arg
+    if n == 1 or n == 2 {
+        set_return_value(new_ok(new_num(1)))
+        return null
+    }
+
+    // call fibonacci(n - 1) recursively
+    let args_a = new_cons(new_num(n - 1), new_nil())
+    let a = call_function(funcref_fibonacci, args_a)
+
+    // call fibonacci(n - 2) recursively
+    let args_b = new_cons(new_num(n - 2), new_nil())
+    let b = call_function(funcref_fibonacci, args_b)
+
+    let result = num_value(ok_val(a)) + num_value(ok_val(b))
+    set_return_value(new_ok(result))
+    return null
+}
+
+// initialize funcref to fibonacci
+track_next_funcall()
+fibonacci()                // stores a funcref and returns immediately
+funcref_fibonacci = get_last_funcref()
+```
+
+With this way to solve the recursion problem, I was finally able to write a complex recursive functions like `eval_expr()`.
+
+---
+
 ## Build
 You can use a precompiled interpreter by copying `out/ablisp` to somewhere in you `$PATH`.
 
