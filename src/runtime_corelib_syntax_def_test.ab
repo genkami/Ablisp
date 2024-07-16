@@ -1,0 +1,71 @@
+import * from "./error.ab"
+import * from "./object.ab"
+import * from "./env.ab"
+import * from "./runtime_corelib.ab"
+import * from "./testing.ab"
+import * from "./eval_test_utils.ab"
+
+fun test_runtime_corelib_syntax_def() {
+    test_section("test_runtime_corelib_syntax_def")
+    debug_clear_all_objects()
+
+    test_expectation("it should define a variable")
+    let env = runtime_corelib_import(new_env())
+    env = env_define(env, new_symbol("y"), new_num(111))
+    env = must_parse_and_eval_decl("(def x 222)", env)?
+    assert_exprs_equal(
+        "x",
+        "222",
+        env,
+    )?
+
+    test_expectation("it should not affect any existing variable")
+    assert_exprs_equal(
+        "y",
+        "111",
+        env,
+    )?
+}
+
+fun test_runtime_corelib_syntax_defun() {
+    test_section("test_runtime_corelib_syntax_defun")
+    debug_clear_all_objects()
+
+    test_expectation("it should define a function")
+    let env = runtime_corelib_import(new_env())
+    env = env_define(env, new_symbol("a"), new_num(111))
+    env = must_parse_and_eval_decl("(defun f () 222)", env)?
+    assert_exprs_equal(
+        "(f)",
+        "222",
+        env,
+    )?
+
+    test_expectation("it should not affect any existing variable")
+    assert_exprs_equal(
+        "a",
+        "111",
+        env,
+    )?
+
+    test_expectation("the function defined by defun can take arguments")
+    env = must_parse_and_eval_decl("(defun pair (a b) (cons a b))", env)?
+    assert_exprs_equal(
+        "(pair 1 'b)",
+        "(cons 1 'b)",
+        env,
+    )?
+
+    test_expectation("the function defined by defun can call the function itself")
+    env = must_parse_and_eval_decl("(defun sum (xs) (if xs (+ (car xs) (sum (cdr xs))) 0))", env)?
+    assert_exprs_equal(
+        "(sum '(1 2 3))",
+        "6",
+        env,
+    )?
+}
+
+main {
+    test_runtime_corelib_syntax_def()?
+    test_runtime_corelib_syntax_defun()?
+}

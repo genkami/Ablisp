@@ -15,6 +15,8 @@ let _funcref_special_let = ""
 let _funcref_special_letrec = ""
 let _funcref_special_lambda = ""
 let _funcref_special_begin = ""
+let _funcref_decl_def = ""
+let _funcref_decl_defun = ""
 
 fun eval_sequence(expr_seq: Num, env: Num, ctx: Text): [Text] {
     let last_val = new_nil()
@@ -675,9 +677,168 @@ native_track_next_funcall()
 special_begin_impl()
 _funcref_special_begin = native_get_last_funcref()
 
+pub fun runtime_corelib_syntax_decl_def_funcref(): Text {
+    return _funcref_decl_def
+}
+
+let _decl_def_desc = "Defines a variable.
+
+```
+> (define x (+ 1 2))
+> x
+;=> 3
+```
+"
+
+fun decl_def_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+    let name = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_symbol(name) {
+        native_return(new_err(code_invalid_argument(), "invalid variable name: " + object_to_string(name)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let expr = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_nil(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let value_result = eval_expr(expr, env, ctx)
+    if result_is_err(value_result) {
+        native_return(value_result)
+        return null
+    }
+    let value = ok_val(value_result)
+    env = env_define(env, name, value)
+    native_return(new_ok(env))
+    return null
+}
+
+native_track_next_funcall()
+decl_def_impl()
+_funcref_decl_def = native_get_last_funcref()
+
+pub fun runtime_corelib_syntax_decl_defun_funcref(): Text {
+    return _funcref_decl_defun
+}
+
+let _decl_defun_desc = "Defines a function.
+
+```
+> (define (incr x) (+ x 1))
+> (incr 3)
+;=> 4
+> (define (sum xs) (if xs (+ (car xs) (sum (cdr xs)) 0)))
+> (sum '(1 2 3))
+;=> 6
+```
+"
+
+fun decl_defun_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+    let name = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_symbol(name) {
+        native_return(new_err(code_invalid_argument(), "invalid variable name: " + object_to_string(name)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let params = cons_car(args)
+    let body = cons_cdr(args)
+    if not object_is_cons(body) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let iter = params
+    loop {
+        if object_is_nil(iter) {
+            break
+        }
+        if not object_is_cons(iter) {
+            native_return(new_err(code_invalid_argument(), "invalid function parameter list: " + object_to_string(params)))
+            return null
+        }
+        let param = cons_car(iter)
+        iter = cons_cdr(iter)
+        if not object_is_symbol(param) {
+            native_return(new_err(code_invalid_argument(), "invalid function parameter: " + object_to_string(param)))
+            return null
+        }
+    }
+
+    let body_env = env_define(env, name, new_nil()) // the function itself
+    let cl = new_closure(name, params, body, body_env)
+    env = env_define(env, name, cl)
+    env_set(body_env, name, cl)
+    native_return(new_ok(env))
+    return null
+}
+
+native_track_next_funcall()
+decl_defun_impl()
+_funcref_decl_defun = native_get_last_funcref()
+
+
 // TODO:
 // - and/or
-// - def/defun
 
 pub fun runtime_corelib_syntax_import(env: Num): Num {
     env = env_define(env, new_symbol("quote"), new_special_form(_funcref_special_quote, _special_quote_desc))
@@ -688,5 +849,7 @@ pub fun runtime_corelib_syntax_import(env: Num): Num {
     env = env_define(env, new_symbol("if"), new_special_form(_funcref_special_if, _special_if_desc))
     env = env_define(env, new_symbol("letrec"), new_special_form(_funcref_special_letrec, _special_letrec_desc))
     env = env_define(env, new_symbol("let"), new_special_form(_funcref_special_let, _special_let_desc))
+    env = env_define(env, new_symbol("def"), new_decl(_funcref_decl_def, _decl_def_desc))
+    env = env_define(env, new_symbol("defun"), new_decl(_funcref_decl_defun, _decl_defun_desc))
     return env
 }

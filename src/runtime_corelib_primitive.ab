@@ -349,6 +349,14 @@ native_track_next_funcall()
 set_cdr_impl()
 _funcref_set_cdr = native_get_last_funcref()
 
+// TODO:
+// - num?
+// - text?
+// - symbol?
+// - t?
+// - nil?
+// - cons?
+
 pub fun runtime_corelib_primitive_import(env: Num): Num {
     env = env_define(env, new_symbol("eqv?"), new_native_fun(_funcref_eqv, _eqv_desc))
     env = env_define(env, new_symbol("equal?"), new_native_fun(_funcref_equal, _equal_desc))
