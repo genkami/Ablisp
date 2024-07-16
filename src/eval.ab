@@ -17,6 +17,29 @@ pub fun eval_expr(expr: Num, env: Num, context: Text): [Text] {
     return native_call(_funcref_eval_expr, args)
 }
 
+// eval_sequence evaluates a list of expressions using `eval_expr`.
+pub fun eval_sequence(expr_seq: Num, env: Num, ctx: Text): [Text] {
+    let last_val = new_nil()
+    loop {
+        if object_is_nil(expr_seq) {
+            break
+        }
+        if not object_is_cons(expr_seq) {
+            let err = new_err(code_syntax_error(), "invalid sequence of expressions: " + object_to_string(expr_seq))
+            return err
+        }
+        let expr = cons_car(expr_seq)
+        expr_seq = cons_cdr(expr_seq)
+
+        let val_result = eval_expr(expr, env, ctx)
+        if result_is_err(val_result) {
+            return val_result
+        }
+        last_val = ok_val(val_result)
+    }
+    return new_ok(last_val)
+}
+
 // eval_decl evalates decls and returns an environment which was
 // obtained by applying `env` to the implementation of the decl.
 // It returns `invalid_decl` error when `expr` is not an application of a decl.

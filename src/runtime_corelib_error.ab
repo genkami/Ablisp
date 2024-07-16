@@ -7,6 +7,7 @@ import * from "./env.ab"
 import * from "./eval.ab"
 
 let _funcref_error = ""
+let _funcref_special_catch = ""
 
 pub fun runtime_corelib_error_error_funcref(): Text {
     return _funcref_error
@@ -71,10 +72,90 @@ native_track_next_funcall()
 error_impl()
 _funcref_error = native_get_last_funcref()
 
-// TODO:
-// - catch
+pub fun runtime_corelib_error_special_catch_funcref(): Text {
+    return _funcref_special_catch
+}
+
+let _special_catch_desc = "Catches an error.
+
+```
+> (catch (\"zero_division\"
+           (echo \"Do not divide by zero!\")
+           'fail)
+    (echo (object->text (/ 10 0)))
+    'ok)
+Do not divide by zero!
+;=> fail
+> (catch (\"some_error\" 'handled)
+    (error \"another_error\" \"This error will not be caught\"))
+Error: another_error: This error will not be caught
+at native function <error_impl__677_v0>
+```
+"
+
+fun special_catch_impl(): Null {
+    let result_args = native_get_args()
+    if result_is_err(result_args) {
+        return null
+    }
+    let args = ok_val(result_args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let env = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = cons_car(args)
+    args = cons_cdr(args)
+    if not object_is_text(ctx) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    if not object_is_cons(args) {
+        native_return(new_err(code_invalid_argument(), "invalid argument list: " + object_to_string(args)))
+        return null
+    }
+    let ctx = text_value(ctx)
+
+    let handler = cons_car(args)
+    let body = cons_cdr(args)
+    if not object_is_cons(handler) {
+        native_return(new_err(code_syntax_error(), "invalid error handler: " + object_to_string(handler)))
+        return null
+    }
+    let code = cons_car(handler)
+    let handler_body = cons_cdr(handler)
+    if not object_is_text(code) {
+        native_return(new_err(code_syntax_error(), "invalid error code: " + object_to_string(code)))
+        return null
+    }
+    let code = text_value(code)
+    let body_result = eval_sequence(body, env, ctx)
+    if result_is_ok(body_result) {
+        native_return(body_result)
+        return null
+    }
+
+    let got_code = err_code(body_result)
+    if code != got_code {
+        native_return(body_result)
+        return null
+    }
+    let handler_result = eval_sequence(handler_body, env, ctx)
+    native_return(handler_result)
+    return null
+}
+
+native_track_next_funcall()
+special_catch_impl()
+_funcref_special_catch = native_get_last_funcref()
 
 pub fun runtime_corelib_error_import(env: Num): Num {
+    env = env_define(env, new_symbol("catch"), new_special_form(_funcref_special_catch, _special_catch_desc))
     env = env_define(env, new_symbol("error"), new_native_fun(_funcref_error, _error_desc))
     return env
 }

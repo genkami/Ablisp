@@ -18,29 +18,6 @@ let _funcref_special_begin = ""
 let _funcref_decl_def = ""
 let _funcref_decl_defun = ""
 
-fun eval_sequence(expr_seq: Num, env: Num, ctx: Text): [Text] {
-    let last_val = new_nil()
-    loop {
-        if object_is_nil(expr_seq) {
-            break
-        }
-        if not object_is_cons(expr_seq) {
-            let err = new_err(code_syntax_error(), "invalid sequence of expressions: " + object_to_string(expr_seq))
-            return err
-        }
-        let expr = cons_car(expr_seq)
-        expr_seq = cons_cdr(expr_seq)
-
-        let val_result = eval_expr(expr, env, ctx)
-        if result_is_err(val_result) {
-            return val_result
-        }
-        last_val = ok_val(val_result)
-    }
-    return new_ok(last_val)
-}
-
-
 pub fun runtime_corelib_syntax_special_quote_funcref(): Text {
     return _funcref_special_quote
 }

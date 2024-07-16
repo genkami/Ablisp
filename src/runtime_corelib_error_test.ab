@@ -5,8 +5,8 @@ import * from "./runtime_corelib.ab"
 import * from "./testing.ab"
 import * from "./eval_test_utils.ab"
 
-fun test_runtime_corelib_base_error() {
-    test_section("test_runtime_corelib_base_error")
+fun test_runtime_corelib_error_error() {
+    test_section("test_runtime_corelib_error_error")
     test_expectation("it should raise an error")
     debug_clear_all_objects()
     let env = runtime_corelib_import(new_env())
@@ -14,6 +14,37 @@ fun test_runtime_corelib_base_error() {
     assert_expr_raises_err("(error \"my_error\" \"foo\")", "my_error", env)?
 }
 
+fun test_runtime_corelib_error_catch() {
+    test_section("test_runtime_corelib_error_catch")
+
+    debug_clear_all_objects()
+    let env = runtime_corelib_import(new_env())
+
+    test_expectation("when the body does not raise an error, it should return the result of the body")
+    assert_exprs_equal(
+        "(catch (\"some_error\" 'failed) 'ignore-this 'and-return 'ok)",
+        "'ok",
+        env
+    )?
+
+    test_expectation("when the error raised from body can be caught by a handler, it should evaluate the handler")
+    assert_exprs_equal(
+        "(catch (\"some_error\" 'ignore-this 'and-return 'failed)" +
+            "(error \"some_error\" \"test error\"))",
+        "'failed",
+        env
+    )?
+
+    test_expectation("when the error raised from body cannot be caught by a handler, it should raise the error")
+    assert_expr_raises_err(
+        "(catch (\"some_error\" 'unreachable)" +
+            "(error \"another_error\" \"test error\"))",
+        "another_error",
+        env,
+    )?
+}
+
 main {
-    test_runtime_corelib_base_error()? 
+    test_runtime_corelib_error_error()? 
+    test_runtime_corelib_error_catch()? 
 }
