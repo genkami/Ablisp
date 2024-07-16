@@ -12,14 +12,14 @@ Ablisp is a Lisp-like language written in [amber-lang/amber](https://github.com/
 ## Why I made this
 I just wanted to know the basic syntax and features of Amber, and I thought writing lisp interpreter is a good way to do it.
 
-Usually, it takes only several hundreds of lines of code to implement a minimal Lisp interpreter.
-In addition to that, I've made several Lisp interpreters in the last couple of years for learning purpose.
+Usually, it takes only several hundred lines of code to implement a minimal Lisp interpreter.
+In addition to that, I've made several Lisp interpreters in the last couple of years for learning purpose, so I'm kind of used to implement small interpreters.
 
-So I thought it takes just a few hours to write a new one even in a language that I'm not familiar with, which turned out to be completely wrong.
+For those reasons, I thought it would take just a few hours to write a new one even in a language that I'm not familiar with, which turned out to be completely wrong.
 
 ## What makes it difficult to write a Lisp interpreter in Amber?
 
-:police_car_light: *Disclaimer: I don't mean to criticize Amber. I just used Amber in a wrong way.*
+:rotating_light: *Disclaimer: I don't mean to criticize Amber. I just used Amber in a wrong way.*
 
 ### No recursive data structures
 
@@ -76,6 +76,23 @@ the_memory = [
 And of cource, I had to implement a simple garbage collection on that array.
 
 ### No recursion
+
+#### Problem
+
+```
+fun fibonacci(i: Num): Num {
+    if i == 0 or i == 1 {
+        return 1
+    } else {
+        // ERROR: Function 'fibonacci' does not exist
+        let a = fibonacci(i - 1)
+        let b = fibonacci(i - 2)
+        return a + b
+    }
+}
+```
+
+#### Solution
 
 ### Lack of first-class functions
 
