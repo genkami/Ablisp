@@ -61,7 +61,7 @@ fun put_object(i: Num, tag: Num, val1: Text, val2: Text): Null {
 ```
 
 Each Ablisp object consists of three words (NOTE: they are literally "words" because of an internal representation of Amber arrays).
-The first word is a *type tag* which indicates a type of object (which is one of `num`, `text`, `symbol`, `t`, `nil`, or `cons`), and the rest two words represents their actual value (values for `num` and `text`, pointers of child elements for `cons`, etc.).
+The first word is a *type tag* which indicates a type of an object (which is one of `num`, `text`, `symbol`, `t`, `nil`, or `cons`), and the rest two words represent their actual value (values for `num` and `text`, pointers of child elements for `cons`, etc.).
 
 So, for example, Ablisp objects are encoded into the following Amber array:
 
@@ -154,7 +154,7 @@ After that, I realized that I can bypass the restriction by getting a "pointer" 
 
 #### Problem
 
-There's no way for Amber program to assign functions to variables.
+There's no way for Amber programs to assign functions to variables.
 
 ```
 fun incr(x: Num): Num {
@@ -221,7 +221,7 @@ unsafe $first__0_v0 {nameof list}[@]; echo \$__AF_first0_v0$ //=> 1
 Now we know that the return value is stored in `$__AF_first0_v0`, so we used that variable name to get the return value.
 But how can we know where the return values are stored in general?
 
-In summary, there are to problems to have first-class functions in Amber:
+In summary, there are two problems that prevents us from having first-class functions in Amber:
 - There's no way to either assign a function to a variable, or get a function name in a compiled Bash script.
 - Even if we can assign a function to a variable and call it, there's no way to get a return value in general.
 
@@ -246,7 +246,7 @@ fun incr(): Null {
         return null
     }
     let x = cons_car(args)      // get the first argument
-    // allocates a new object in the "heap" (or a large Bash array) and store the result
+    // allocates a new object in the "heap" (or a large Bash array) and stores the result
     let xplus1 = new_num(num_value(x) + 1)
     set_return_value(new_ok(xplus1))
     return null
