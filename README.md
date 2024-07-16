@@ -92,9 +92,70 @@ fun fibonacci(i: Num): Num {
 }
 ```
 
+Amber somehow does not support recursive functions, even though the compiler's target language (bash script) does support it.
+
+This is a big pain point for developing interpreters, because programming languages in general are recursive by nature.
+
 #### Solution
 
-### Lack of first-class functions
+I had to convert most of the algorithms into iterative ones using stack.
+
+```
+// NOTE: `Num` means `*Object` and `[Text]` means `Result<*Object, Error>` in Ablisp.
+pub fun parse_sexp(): [Text] {
+    let stack_base = callstack_current_sp() // like `mov rbp, rsp`
+    loop {
+        ...
+        if is_number_begin() {
+            let result = consume_number()
+            if result_is_err(result) {
+                last_error = result
+                break
+            }
+            callstack_push(ok_val(result))
+            continue
+        }
+        ...
+        if is_list_begin() {
+            consume_next()
+            callstack_push(list_start)
+            continue
+        }
+        ...
+        if is_list_end() {
+            ...
+            loop {
+                let top = callstack_pop()
+                if top == list_start {
+                    break
+                }
+                ...
+                list = new_cons(top, list)
+                ...
+            }
+            ...
+            callstack_push(list)
+            continue
+        }
+        ...
+    }
+    ...
+    if result_is_err(last_error) {
+        callstack_rewind(stack_base) // like `mov rsp, rbp`
+        return last_error
+    }
+    ...
+    let last_value = callstack_pop()
+    ...
+    return new_ok(last_value)
+}
+```
+
+After that, I realized that I can bypass the restriction by getting a "pointer" of Amber functions. I'll describe it more deeply in the next section.
+
+### No first-class functions
+
+
 
 ## Build
 You can use a precompiled interpreter by copying `out/ablisp` to somewhere in you `$PATH`.
