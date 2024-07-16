@@ -67,6 +67,51 @@ pub fun eval_decl(expr: Num, env: Num, context: Text): [Text] {
     return new_env_result
 }
 
+fun new_toplevel_expr(val: Num): [Text] {
+    return ["expr", val as Text]
+}
+
+pub fun result_is_toplevel_expr(result: [Text]): Bool {
+    return result[0] == "expr"
+}
+
+#[allow_absurd_cast]
+pub fun toplevel_expr_val(result: [Text]): Num {
+    return result[1] as Num
+}
+
+fun new_toplevel_decl(val: Num): [Text] {
+    return ["decl", val as Text]
+}
+
+pub fun result_is_toplevel_decl(result: [Text]): Bool {
+    return result[0] == "decl"
+}
+
+#[allow_absurd_cast]
+pub fun toplevel_decl_env(result: [Text]): Num {
+    return result[1] as Num
+}
+
+// eval_toplevel evaluates either an expr or a decl.
+// The return value will be one of toplevel_expr, toplevel_decl, or err.
+pub fun eval_toplevel(expr: Num, env: Num, context: Text): [Text] {
+    let decl_result = eval_decl(expr, env, context)
+    if result_is_ok(decl_result) {
+        let env = ok_val(decl_result)
+        return new_toplevel_decl(env)
+    }
+    if err_code(decl_result) != code_invalid_decl() {
+        return decl_result
+    }
+    let expr_result = eval_expr(expr, env, context)
+    if result_is_ok(expr_result) {
+        let val = ok_val(expr_result)
+        return new_toplevel_expr(val)
+    }
+    return expr_result
+}
+
 fun expr_is_literal(expr: Num): Bool {
     if object_is_num(expr) {
         return true
@@ -198,6 +243,12 @@ fun eval_app(expr: Num, env: Num, context: Num): [Text] {
             return err
         }
         return call_result
+    }
+
+    // apply_function does this check, but this is still needed in order to avoid arguments being evaluated by mistake,
+    if object_is_decl(fun_val) {
+        let err = new_err(code_syntax_error(), "declaration " + object_to_string(fun_val) + " cannot be used here")
+        return err
     }
 
     let args_val_array = [Num]

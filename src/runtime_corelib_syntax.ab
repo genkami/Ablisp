@@ -407,7 +407,7 @@ pub fun runtime_corelib_syntax_special_letrec_funcref(): Text {
 }
 
 let _special_letrec_desc = "Similar to `let`, but when binding values to variables,
-their expression can access the local variables that are being defined.
+their expressions can access the local variables that are being defined.
 
 ```
 > (letrec ((f (lambda (n) (if (eqv? n 0) 0 (+ n (g (- n 1))))))
@@ -661,7 +661,7 @@ pub fun runtime_corelib_syntax_decl_def_funcref(): Text {
 let _decl_def_desc = "Defines a variable.
 
 ```
-> (define x (+ 1 2))
+> (def x (+ 1 2))
 > x
 ;=> 3
 ```
@@ -732,10 +732,10 @@ pub fun runtime_corelib_syntax_decl_defun_funcref(): Text {
 let _decl_defun_desc = "Defines a function.
 
 ```
-> (define (incr x) (+ x 1))
+> (defun incr (x) (+ x 1))
 > (incr 3)
 ;=> 4
-> (define (sum xs) (if xs (+ (car xs) (sum (cdr xs)) 0)))
+> (defun sum (xs) (if xs (+ (car xs) (sum (cdr xs)) 0)))
 > (sum '(1 2 3))
 ;=> 6
 ```
@@ -826,7 +826,7 @@ pub fun runtime_corelib_syntax_import(env: Num): Num {
     env = env_define(env, new_symbol("if"), new_special_form(_funcref_special_if, _special_if_desc))
     env = env_define(env, new_symbol("letrec"), new_special_form(_funcref_special_letrec, _special_letrec_desc))
     env = env_define(env, new_symbol("let"), new_special_form(_funcref_special_let, _special_let_desc))
-    env = env_define(env, new_symbol("def"), new_decl(_funcref_decl_def, _decl_def_desc))
     env = env_define(env, new_symbol("defun"), new_decl(_funcref_decl_defun, _decl_defun_desc))
+    env = env_define(env, new_symbol("def"), new_decl(_funcref_decl_def, _decl_def_desc))
     return env
 }

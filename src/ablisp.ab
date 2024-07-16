@@ -35,14 +35,17 @@ fun parse_and_eval_toplevel(source: Text): Null {
             fail 1
         }
         let expr = ok_val(result_expr)
-        let result_val = eval_expr(expr, env, "<toplevel>")
-        if result_is_err(result_val) {
-            let code = err_code(result_val)
+        let eval_result = eval_toplevel(expr, env, "<toplevel>")
+        if result_is_err(eval_result) {
+            let code = err_code(eval_result)
             if code == code_exit_interpreter() {
                 break
             }
-            show_error(result_val)
+            show_error(eval_result)
             fail 1
+        }
+        if result_is_toplevel_decl(eval_result) {
+            env = toplevel_decl_env(eval_result)
         }
         i += 1
     }

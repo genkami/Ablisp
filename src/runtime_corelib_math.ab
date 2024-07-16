@@ -171,6 +171,8 @@ pub fun runtime_corelib_math_div_funcref(): Text {
 }
 
 let _div_desc = "Divides arguments.
+
+```
 > (/ 3)
 ;=> .33333333333333333333
 > (/ 9 3)
@@ -180,6 +182,7 @@ let _div_desc = "Divides arguments.
 > (/ 9 0)
 Error: zero_division: division by zero
 at native function <div_impl__959_v0>
+```
 "
 
 fun div_impl(): Null {
