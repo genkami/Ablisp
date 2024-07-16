@@ -221,7 +221,57 @@ unsafe $first__0_v0 {nameof list}[@]; echo \$__AF_first0_v0$ //=> 1
 Now we know that the return value is stored in `$__AF_first0_v0`, so we used that variable name to get the return value.
 But how can we know where the return values are stored in general?
 
+In summary, there are to problems to have first-class functions in Amber:
+- There's no way to either assign a function to a variable, or get a function name in a compiled Bash script.
+- Even if we can assign a function to a variable and call it, there's no way to get a return value in general.
+
 #### Solution
+
+To solve the two problems above, I first addresed the problem with return values.
+
+Instead of writing Amber functions like this:
+
+```
+fun incr(x: Num): Num {
+    return x + 1
+}
+```
+
+I wrote the functions in the following way:
+
+```
+fun incr(): Null {
+    let args = get_args()       // args is Result<Pair, Error>
+    if result_is_error(args) {
+        return null
+    }
+    let x = cons_car(args)      // get the first argument
+    // allocates a new object in the "heap" (or a large Bash array) and store the result
+    let xplus1 = new_num(num_value(x) + 1)
+    set_return_value(new_ok(xplus1))
+    return null
+}
+```
+
+where `get_args()` and `set_return_value` passes values to/from functions via a single global variable.
+
+```
+// Note again that [Text] is Result<*Object, Error> in Ablisp.
+pub fun get_args(): [Text] {
+    let args = _funcall_args
+    _funcall_args = -1                 // invalidate
+    _funcall_retval = default_retval() // invalidate
+    return new_ok(args)
+}
+
+pub fun set_return_value(result: [Text]): Null {
+    _funcall_retval = result
+}
+```
+
+In this way, Amber functions can follow the same calling convention, although they look a bit ugly.
+
+Now that we solved the issue with calling conventions, it's time to consider how to get a function as a value.
 
 ## Build
 You can use a precompiled interpreter by copying `out/ablisp` to somewhere in you `$PATH`.
