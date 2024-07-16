@@ -79,6 +79,8 @@ And of cource, I had to implement a simple garbage collection on that array.
 
 #### Problem
 
+Amber somehow does not support recursive functions, even though the compiler's target language (bash script) does support it.
+
 ```
 fun fibonacci(i: Num): Num {
     if i == 0 or i == 1 {
@@ -91,8 +93,6 @@ fun fibonacci(i: Num): Num {
     }
 }
 ```
-
-Amber somehow does not support recursive functions, even though the compiler's target language (bash script) does support it.
 
 This is a big pain point for developing interpreters, because programming languages in general are recursive by nature.
 
@@ -108,16 +108,13 @@ pub fun parse_sexp(): [Text] {
         ...
         if is_number_begin() {
             let result = consume_number()
-            if result_is_err(result) {
-                last_error = result
-                break
-            }
+            ...
             callstack_push(ok_val(result))
             continue
         }
         ...
         if is_list_begin() {
-            consume_next()
+            ...
             callstack_push(list_start)
             continue
         }
@@ -155,7 +152,76 @@ After that, I realized that I can bypass the restriction by getting a "pointer" 
 
 ### No first-class functions
 
+#### Problem
 
+There's no way for Amber program to assign functions to variables.
+
+```
+fun incr(x: Num): Num {
+    return x + 1
+}
+
+// ERROR: Variable 'incr' does not exist
+let f = incr
+echo f(3)
+```
+
+Amber functions are compiled into Bash functions, so theoretically it's possible to call arbitrary functions once we can get their names in compiled Bash scripts. But Amber does not provide a way to do it.
+
+Furthermore, even if we can get the functions' real names in compiled Bash scripts, we still can't call them.
+This is because Amber does not have a unified calling convention.
+
+For example, consider the following Amber code:
+
+```
+fun first(list: [Num]): Num {
+    return list[0]
+}
+let list = [1, 2, 3]
+echo first(list) //=> 1
+```
+
+This compiles into the following Bash script:
+
+```
+function first__0_v0 {
+    local list=("${!1}")
+    __AF_first0_v0="${list[0]}";
+    return 0
+}
+__AMBER_ARRAY_0=(1 2 3);
+__0_list=("${__AMBER_ARRAY_0[@]}")
+first__0_v0 __0_list[@];
+__AF_first0_v0__5=$__AF_first0_v0;
+echo $__AF_first0_v0__5
+```
+
+Here, the Amber function `first` compiles into a Bash function `first__0_v0`, which takes arguments via command-line arguments, and returns the result via a global variable `__AF_first0_v0`.
+
+The problem here is that we can't know where the return value is after calling an arbitrary function.
+
+To describe the problem, assume that we can somehow get a Bash function name of an Amber function.
+We can call it by using the [command statement](https://docs.amber-lang.com/basic_syntax/commands).
+
+For example, the previous `first` example can be written in the following way using the command statement:
+
+```
+fun first(list: [Num]): Num {
+    return list[0]
+}
+let list = [1, 2, 3]
+
+// NOTE:
+// - `$..$` executes arbitrary Bash scripts
+// - `unsafe` ignores command results
+// - `nameof X` returns the Bash variable name of an amber variable X (X can't be a function)
+unsafe $first__0_v0 {nameof list}[@]; echo \$__AF_first0_v0$ //=> 1
+```
+
+Now we know that the return value is stored in `$__AF_first0_v0`, so we used that variable name to get the return value.
+But how can we know where the return values are stored in general?
+
+#### Solution
 
 ## Build
 You can use a precompiled interpreter by copying `out/ablisp` to somewhere in you `$PATH`.
